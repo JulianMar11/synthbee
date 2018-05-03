@@ -1,0 +1,10 @@
+numpy
+pandas
+SciPy
+matplotlib
+condor
+opencv-python==3.3.0.10
+imageio
+tensorflow
+moviepy
+imutils
