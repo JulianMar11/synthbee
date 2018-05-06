@@ -10,7 +10,7 @@ class trackobject():
         h = object['bottomright']['y'] - object['topleft']['y']
         x = object['topleft']['x']
         w = object['bottomright']['x'] - object['topleft']['x']
-        # 620,200,1290,60
+
         self.object = object
         self.trackhistory = []
         self.track_window = (x, y, w, h)
@@ -18,30 +18,46 @@ class trackobject():
         self.yolo = object
         center = getcenter(self.track_window)
         self.distance = getdistance(center, frame)
+
         # set up the ROI for tracking
         self.roi = frame[y:y+h, x:x+w]
         self.hsv_roi = cv2.cvtColor(self.roi, cv2.COLOR_RGB2HSV)
-        self.mask = cv2.inRange(self.hsv_roi, np.array((0., 60., 32.)), np.array((180., 255., 255.)))
-        self.roi_hist = cv2.calcHist([self.hsv_roi], [0], self.mask, [180], [0, 180])
+
+        self.maskinv = cv2.inRange(self.hsv_roi, np.array((0, 0, 0)), np.array((180, 255, 160)))
+        self.mask = cv2.bitwise_not(self.maskinv)
+
+        self.roi_hist = cv2.calcHist([self.hsv_roi], [0], self.maskinv, [180], [0, 180])
         cv2.normalize(self.roi_hist, self.roi_hist, 0, 255, cv2.NORM_MINMAX)
+
         self.term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
+
         self.maxcount = count
         self.currentcount = 0
         self.trackhistory = []
+
         '''
         #Tests zum Anpassen der Maske
-        for h in range(0,255,50):
-                for v in range(0,255,50):
-                    for s in range(0,255,50):
-                        lower = np.array([0,0,0])
-                        higher = np.array([h,v,s])
-                        mask = cv2.inRange(self.hsv_roi, lower, higher)
-                        cv2.imwrite("NewObject_ID_"+ str(self.IDobject) +str(h)+"V_"+str(v)+ "S_"+str(s)+".jpg", mask)
+        for h in range(0, 180, 15):
+            for v in range(0, 255, 50):
+                for s in range(0, 255, 50):
+                    lower = np.array([0, 0, 0])
+                    higher = np.array([h, v, s])
+                    mask = cv2.inRange(self.hsv_roi, lower, higher)
+                    cv2.imwrite("NewObject_ID_" + str(self.IDobject) + str(h) + "V_" + str(v) + "S_" + str(s) + ".jpg",mask)
         
+        for s in range(100, 255, 20):
+                    lower = np.array([0, 0, 0])
+                    higher = np.array([180, 255, s])
+                    mask = cv2.inRange(self.hsv_roi, lower, higher)
+                    cv2.imwrite("NewObject_ID_" + str(self.IDobject) + "Param_" + "S_" + str(s) + ".jpg",mask)
+
+'''
+
         #Testzur Ausgabe der Maske
-        cv2.imwrite("NewObject_ID_"+ str(self.IDobject) +".jpg", self.mask)
+
+        cv2.imwrite("NewObject_ID_"+ str(self.IDobject) +"_maskinv.jpg", self.maskinv)
+        cv2.imwrite("NewObject_ID_"+ str(self.IDobject) +"_maskfinal.jpg", self.mask)
         cv2.imwrite("NewObject_ORIGNAL_ID_" + str(self.IDobject) +".jpg", self.roi)
-        '''
 
     #Methode zum Ersetzen des bestehenden Objektes durch ein neues Objekt
     #Es wird eine neue Region of Interest erzeugt
@@ -56,11 +72,15 @@ class trackobject():
         self.currentcount = 0
         center = getcenter(self.track_window)
         self.distance = getdistance(center, frame)
+
         # set up the ROI for tracking
         self.roi = frame[y:y+h, x:x+w]
         self.hsv_roi = cv2.cvtColor(self.roi, cv2.COLOR_RGB2HSV)
-        self.mask = cv2.inRange(self.hsv_roi, np.array((0, 80, 50)), np.array((180, 255, 255)))
-        self.roi_hist = cv2.calcHist([self.hsv_roi], [0], self.mask, [180], [0, 180])
+
+        self.maskinv = cv2.inRange(self.hsv_roi, np.array((0, 0, 0)), np.array((180, 255, 160)))
+        self.mask = cv2.bitwise_not(self.maskinv)
+
+        self.roi_hist = cv2.calcHist([self.hsv_roi], [0], self.maskinv, [180], [0, 180])
         cv2.normalize(self.roi_hist, self.roi_hist, 0, 255, cv2.NORM_MINMAX)
 
     def getcurrenttrackwindow(self):
@@ -103,7 +123,7 @@ class trackobject():
     #Methode zum Einzeichnen im Cockpit
     def drawobjectBB(self, frame):
         if self.currentcount > 0:
-            outputstring = "ID: " + str(self.IDobject) +' '+  self.yolo['label'] + " d: " + str(self.distance) + " Meter"
+            outputstring = "ID: " + str(self.IDobject) +' '+  self.yolo['label'] + "_MEANSHIFT_d: " + str(self.distance) + " Meter"
             x,y,w,h = self.track_window
         else:
             outputstring = "ID: " + str(self.IDobject) +' '+ self.yolo['label'] + " d: "+ str(self.distance) + " Meter"

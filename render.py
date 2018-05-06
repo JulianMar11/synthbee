@@ -28,20 +28,12 @@ if activetracker:
     import tracker as tracking
     #Parameters TRACKER
     objecttracks = []
-    persontracks = []
-    signaltracks = []
 
 def renderimage(image):
     #Globale Variablenzugriffe
     global imagecount
     global IDobject
-    global IDsignal
-    global left_fit
-    global right_fit
-    global warning
-    global currentsignal
-    global currentsignalbool
-    global currenttext
+
     print("RENDERER - Starting frame " + str(imagecount))
 
     #Erzeugt Resultatbild
@@ -55,19 +47,6 @@ def renderimage(image):
             if stop:
                 objecttracks.remove(object)
                 print("TRACKER - Remove outdated object tracker")
-
-        print("TRACKER - Update current signal trackers")
-        for object in signaltracks:
-            stop = object.nextimage(image)
-            if stop:
-                signaltracks.remove(object)
-                print("TRACKER - Remove outdated signal tracker")
-            else:
-                text = object.gettext()
-                if checktext(text,currenttext):
-                    currenttext = text
-                    currentsignal = object
-                    currentsignalbool = True
 
 
     if activeyolo:
@@ -117,9 +96,6 @@ def renderimage(image):
         lastsignal = []
         for object in objecttracks:
             object.drawobjectBB(result)
-        #Bestehende Objekttracker einzeichnen
-        for object in signaltracks:
-            object.drawsignalBB(result)
 
 
     imagecount = imagecount + 1
@@ -138,19 +114,8 @@ def checktext(text,previoustext):
 def saveresults():
     print("RENDERER - Ergebnisse speichern")
     keys = objecttracks[0].keys()
-    with open('persons.csv', 'w') as csvfile:
-        fieldnames = ['ID','label', 'confidence', 'image', 'topleft', 'bottomright']
+    with open('detections.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=keys)
         writer.writeheader()
         for p in objecttracks:
-            id = p['ID']
-            ty = p['topleft']['y']
-            tx = p['topleft']['x']
-            by = p['bottomright']['y']
-            bx = p['bottomright']['x']
-            name = p['label']
-            im = p['image']
-            confidence = p['confidence']
-            #print(ty,tx,by,bx,im)
             writer.writerow(p)
-            #writer.writerow(id, name, confidence, tx, ty, bx, by, im)
