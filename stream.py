@@ -13,7 +13,7 @@ def playvideo(filenumber, end, savevideo, saveframes, savedata):
 
     #1.Spalte = Offset   2.Spalte = Wieviele Frame 3.Spalte = Jump
     variables = [
-            [600, 0, 1]
+            [800, 0, 1]
         ]
 
     cap = cv2.VideoCapture('/Users/Julian/Desktop/Dropbox/synthbeedata/'+files[filenumber])

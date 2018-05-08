@@ -7,7 +7,8 @@ imagecount = 0
 
 
 activeyolo = True
-activetracker = True
+activetracker = False
+activeMosse = True
 
 #### OBJECT DETECTION
 if activeyolo:
@@ -29,6 +30,15 @@ if activetracker:
     #Parameters TRACKER
     objecttracks = []
 
+
+#### Mosse TRACKER
+if activeMosse:
+    #Import TRACKER
+    import Mossetracker as tracking
+    #Parameters TRACKER
+    objecttracks = []
+
+
 def renderimage(image):
     #Globale Variablenzugriffe
     global imagecount
@@ -47,6 +57,18 @@ def renderimage(image):
             if stop:
                 objecttracks.remove(object)
                 print("TRACKER - Remove outdated object tracker")
+
+    if activeMosse:
+        #Bestehende Mossetracker aktualisieren
+        print("TRACKER - Update current object trackers")
+        for object in objecttracks:
+            frame_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            stop = object.update(frame_gray)
+            if stop:
+                objecttracks.remove(object)
+                print("TRACKER - Remove outdated object tracker")
+
+
 
 
     if activeyolo:
@@ -80,13 +102,46 @@ def renderimage(image):
                     remainingdetects.append(detect)
             YOLO_objects = remainingdetects
 
-        #Initialisiert neue Objekttracker
-        for object in YOLO_objects:
-            IDobject = IDobject + 1
-            object['ID'] = IDobject
-            newtracker = tracking.trackobject(10, object, image)
-            objecttracks.append(newtracker)
+            #Initialisiert neue Objekttracker
+            for object in YOLO_objects:
+                IDobject = IDobject + 1
+                object['ID'] = IDobject
+                newtracker = tracking.trackobject(10, object, image)
+                objecttracks.append(newtracker)
 
+        if activeMosse:
+            remainingdetects = []
+            for detect in YOLO_objects:
+                cancel = False
+                x = detect['topleft']['x']
+                y = detect['topleft']['y']
+                w = detect['bottomright']['x'] - detect['topleft']['x']
+                h = detect['bottomright']['y'] - detect['topleft']['y']
+                for track in objecttracks:
+                    (xt, yt), (wt, ht) = track.pos, track.size
+                    x1, y1, x2, y2 = int(xt-0.5*wt), int(yt-0.5*ht), int(xt+0.5*wt), int(yt+0.5*ht)
+                    detectandtrack = np.array([[x,y, x+w,y+h],[x1, y1, x2, y2]])
+                    suppression = non_max_suppression(detectandtrack, probs=None, overlapThresh=0.8)
+                    if len(suppression)==1:
+                        cancel = True
+                        print("TRACKER - Removing current tracker due to existing new detection")
+                        objecttracks.remove(track)
+
+                if not cancel:
+                    remainingdetects.append(detect)
+
+            #Initialisiert neue Objekttracker
+            for object in YOLO_objects:
+                #IDobject = IDobject + 1
+                #object['ID'] = IDobject
+                x1 = object['topleft']['x']
+                y1 = object['topleft']['y']
+                x2 = object['bottomright']['x']
+                y2 = object['bottomright']['y']
+                frame_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                rect = (x1,y1,x2,y2)
+                newtracker = tracking.MOSSE(frame_gray, rect, 15)
+                objecttracks.append(newtracker)
 
     ##Ausgabe kreieren
     print("RENDERER - Create Output")
@@ -97,6 +152,11 @@ def renderimage(image):
         for object in objecttracks:
             object.drawobjectBB(result)
 
+    if activeMosse:
+        print("Mosse - Drawing Bounding Boxes")
+
+        for tracker in objecttracks:
+                tracker.draw_state(result)
 
     imagecount = imagecount + 1
     return result
