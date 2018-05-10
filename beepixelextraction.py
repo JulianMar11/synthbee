@@ -1,38 +1,46 @@
 import cv2;
 import numpy as np;
 import os
+from os import listdir, getcwd
+from os.path import isfile, join
 
-os.chdir('/Users/Julian/Desktop/Dropbox/synthbeedata/MeanshiftMasken')
+
+def extractbee(image, threshold):
+    # Threshold.
+    # Set values equal to or above 220 to 0.
+    # Set values below 220 to 255.
+    im_in = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    th, mask = cv2.threshold(im_in, threshold, 255, cv2.THRESH_BINARY_INV)
+    return mask
+
+
+
+os.chdir('/Users/Julian/Desktop/Dropbox/synthbeedata/Hintergrund/bees')
+
 
 # Read image
-im_in = cv2.imread("NewObject_ID_38_maskfinal.jpg", cv2.IMREAD_GRAYSCALE);
 
-# Threshold.
-# Set values equal to or above 220 to 0.
-# Set values below 220 to 255.
 
-th, im_th = cv2.threshold(im_in, 220, 255, cv2.THRESH_BINARY_INV);
 
-# Copy the thresholded image.
-im_floodfill = im_th.copy()
+def samplepictures(threshold):
+    path = getcwd()
+    print(path)
+    filelist = [f for f in listdir(path) if isfile(join(path, f))]
+    print(filelist)
+    anzfiles = len(filelist)
 
-# Mask used to flood filling.
-# Notice the size needs to be 2 pixels than the image.
-h, w = im_th.shape[:2]
-mask = np.zeros((h+2, w+2), np.uint8)
+    for r in range(0, anzfiles):
+        print("Reading " + filelist[r])
+        if filelist[r].endswith(".jpg"):
+            print("Opening " + filelist[r])
 
-# Floodfill from point (0, 0)
-cv2.floodFill(im_floodfill, mask, (0,0), 255);
+            image = cv2.imread(filelist[r])
+            imthresh = extractbee(image, threshold)
+            cv2.imwrite(str(r) + "_Original.jpg", image)
+            cv2.imwrite(str(r) + "_Thresh_" + str(threshold) + ".jpg", imthresh)
 
-# Invert floodfilled image
-im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+        else:
+            print("Datei: " + str(filelist[r]) + " ist nicht jpg")
 
-# Combine the two images to get the foreground.
-im_out = im_th | im_floodfill_inv
 
-# Display images.
-cv2.imshow("Thresholded Image", im_th)
-cv2.imshow("Floodfilled Image", im_floodfill)
-cv2.imshow("Inverted Floodfilled Image", im_floodfill_inv)
-cv2.imshow("Foreground", im_out)
-cv2.waitKey(0)
+samplepictures(235)
