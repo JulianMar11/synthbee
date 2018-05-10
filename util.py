@@ -26,8 +26,8 @@ def cluster(mask, numCluster):
     dim = int(np.sum(np.sum(mask))/255)
     # Number of clusters in data
     
-    print 'dimension of img: ' + str(mask.shape)
-    print 'Sum of white pixels: ' + str(dim)
+    print('dimension of img: ' + str(mask.shape))
+    print('Sum of white pixels: ' + str(dim))
 
     # will store the coordinate s of each white pixel
     data = np.zeros([dim, 2], dtype=np.float32)
