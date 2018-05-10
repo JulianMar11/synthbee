@@ -6,9 +6,9 @@ from imutils.object_detection import non_max_suppression
 imagecount = 0
 
 
-activeyolo = True
+activeyolo = False
 activetracker = False
-activeMosse = True
+activeMosse = False
 
 #### OBJECT DETECTION
 if activeyolo:
