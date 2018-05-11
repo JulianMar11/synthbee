@@ -67,8 +67,8 @@ def playvideo(filenumber, end, savevideo, saveframes, savedata):
 
 
 filenumber = 0
-savevideo = True
-saveframes = False
+savevideo = False
+saveframes = True
 savedata = False
 
 playvideo(filenumber, 0, savevideo, saveframes, savedata)
