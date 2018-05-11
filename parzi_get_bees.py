@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import PATH
 import util
 
+print(PATH.DATAPATH)
+
 ## Settings
 # scale images for processing (Nevertheless all imgs are stored in best quality)
 scale = 1
@@ -42,7 +44,7 @@ os.mkdir(beePath + 'multi/bee/')
 os.mkdir(beePath + 'multi/mask/')
 
 # load background Image and crop light reflection
-bgImg_fullsize_color  = cv2.imread('background.png')[180:800, :]
+bgImg_fullsize_color  = cv2.imread('Subtraktion/background.jpg')[180:800, :]
 # resize for faster processing
 bgImg_color = cv2.resize(np.copy(bgImg_fullsize_color), None, None, scale, scale)
 # grayscale
@@ -57,14 +59,14 @@ print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 end_frame =  int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 cap.set(1, start_frame)
 
-for num_frame in range(0, end-start):
+for num_frame in range(0, end_frame-start_frame):
     ## For each frame do
     # load frame and crop light reflection
     # frame_fullsize_color = cv2.imread(PATH.DATAPATH + 'snap4.png')[180:800, :]
     ret, frame_fullsize_color = cap.read()
 
     ## Cause video doesnt work 
-    frame_fullsize_color = cv2.imread('snap2.png')
+    # frame_fullsize_color = cv2.imread('snap2.png')
     frame_fullsize_color = frame_fullsize_color[180:800, :]
 
     # resize for faster processing
@@ -121,7 +123,7 @@ for num_frame in range(0, end-start):
         index = index + 1
 
     if num_frame % 10 == 0:
-        for i in xrange(len(images)):
+        for i in range(len(images)):
             plt.subplot(len(beeMasks), 2, i+1), plt.imshow(images[i])
             plt.title(titles[i])
             plt.xticks([]),plt.yticks([])

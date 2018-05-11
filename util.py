@@ -41,6 +41,8 @@ def cluster(mask, numCluster):
                 data[index] = [x, y]
                 index = index + 1
 
+    print(data.shape)
+
     # Define k-means criteria = ( type, max_iter = 10 , epsilon = 1.0 )
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
 
@@ -52,7 +54,7 @@ def cluster(mask, numCluster):
 
     # Apply KMeans (second last param: number of random starting positions)
     compactness,labels,centers = cv2.kmeans(data, numCluster, None, criteria, 5, flags) 
-  
+
     # transform back to int
     #data = np.int8(data)
 
@@ -64,11 +66,11 @@ def cluster(mask, numCluster):
     beeMasks = []    
 
     # for each bee
-    for bee in xrange(numCluster):
+    for bee in range(numCluster):
         # create new, black beeMask
         beeMask = np.zeros([width, height])
         # set only those pixels to white which belong to bee
-        for i in xrange(data.shape[0]):
+        for i in range(data.shape[0]):
             if labels[i] == bee + 1:
                 #print "pixel an der stelle ist weiss: " + str((data[i,0]))
                 beeMask[int(data[i,0]),int(data[i,1])] = 255
@@ -81,9 +83,9 @@ def cluster(mask, numCluster):
     intersects = []
 
     # TODO: check if intersection contains any white pixels! If not: its nor really intersecting
-    for i in xrange(numCluster):
+    for i in range(numCluster):
         moreThanOneBee = False
-        for j in xrange(numCluster):
+        for j in range(numCluster):
             # Check if one of the four corners is inside of existing bounding boxes
             if boundingBoxesIntersect(boundingBoxes[j], boundingBoxes[i]):
                 intersects.append(True)
