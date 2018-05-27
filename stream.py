@@ -4,7 +4,7 @@ import render as ren
 
 
 def playvideo(filenumber, end, savevideo, saveframes, savedata):
-    os.chdir('/Users/Julian/Desktop/Dropbox/synthbeedata/')
+    os.chdir('/Users/Julian/Desktop/Dropbox/synthbeedata/Raw/')
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     files = [
@@ -67,8 +67,8 @@ def playvideo(filenumber, end, savevideo, saveframes, savedata):
 
 
 filenumber = 0
-savevideo = True
-saveframes = False
+savevideo = False
+saveframes = True
 savedata = False
 
 playvideo(filenumber, 0, savevideo, saveframes, savedata)

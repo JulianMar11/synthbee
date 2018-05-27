@@ -51,6 +51,7 @@ def cluster(mask, numCluster):
     # performs kmeans clusterin using scipy (cv2.kmeans doesn't work with python3)
     centers, labels = kmeans2(data, numCluster, iter=15, minit="random")
 
+
     # shift all labels by one so that they differ from zero.
     labels = labels + 1
 

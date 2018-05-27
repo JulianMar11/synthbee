@@ -14,6 +14,7 @@ def multiprocessing(func, frames, frame_indices, prod_run, proc_dir, workers):
         res = executor.map(func, frames, frame_indices, prod_run, proc_dir  )
     return list(res)
 
+<<<<<<< HEAD
 
 # PATHES!
 # cwd: DATA
@@ -27,6 +28,31 @@ num_cpu = 3
 production_run = True
 # first store all data in RAM
 save_array = []
+=======
+print(PATH.DATAPATH)
+
+## Settings
+# scale images for processing (Nevertheless all imgs are stored in best quality)
+scale = 1
+# Size of the dilation "cursor"
+dilateRectDim = int(np.floor(scale*scale*24))
+# Path to bee directory
+beePath = 'bees/' + str(datetime.datetime.now()) + '/'
+# Blops smaller than this will be removed
+minBlopSize = int(4000 * scale * scale)
+# A Bee is supposed to be this big. Used to calculate number of clusters
+beeBlopSize = int(8000 * scale * scale)
+# Threshold for differntiation (low if noise is low, high otherwise)
+diff_threshold = 25
+# True if imgs should be saved with more than one bee
+saveCollidingBoundingBoxes = True
+# True if bee imgs should be saved
+saveBees = True
+# Skips frames
+start_frame = 0
+# Last frame
+end_frame = 0
+>>>>>>> 088ed3d8cf8663d4ac6803af95ab606b865bb2ce
 
 ## Setup
 # Create the specified directory
@@ -93,3 +119,4 @@ for video in videos:
 
     print("start of video number " + str(video_index) + "(" + video + ") " + " of " + str(len(videos)))
     multiprocessing(util.calc, frames, frame_indices, prod_run, proc_dir, num_cpu )
+

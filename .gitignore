@@ -2,3 +2,23 @@
 .idea/workspace.xml
 
 *.xml
+
+*.pyc
+
+*.pyc
+
+*.pyc
+
+*.xml
+
+*.ipynb
+
+*.pyc
+
+__pycache__/video.cpython-36.pyc
+
+__pycache__/tst_scene_render.cpython-36.pyc
+
+__pycache__/common.cpython-36.pyc
+
+.idea/inspectionProfiles/Project_Default.xml
