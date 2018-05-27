@@ -1,33 +1,33 @@
 import datetime
 import os
-
+import threading
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-
+import time
+from multiprocessing.dummy import Pool as ThreadPool
 import PATH
 import util
+import itertools
 
-## Settings
-# scale images for processing (Nevertheless all imgs are stored in best quality)
-scale = 1
-# Size of the dilation "cursor"
-dilateRectDim = int(np.floor(scale*scale*24))
+# PATHES!
+# cwd: DATA
+# DATA/videos
+# DATA/bees
+# DATA/background_3.png
+
+# number of cpus
+num_cpu = 4
+# no print commands if true
+production_run = True
+# first store all data in RAM
+save_array = []
+
 # Path to bee directory
 beePath = 'bees/' + str(datetime.datetime.now()) + '/'
-# Blops smaller than this will be removed
-minBlopSize = int(4000 * scale * scale)
-# A Bee is supposed to be this big. Used to calculate number of clusters
-beeBlopSize = int(8000 * scale * scale)
-# Threshold for differntiation (low if noise is low, high otherwise)
-diff_threshold = 25
-# True if imgs should be saved with more than one bee
-saveCollidingBoundingBoxes = True
-# True if bee imgs should be saved
-saveBees = True
-# Skips frames
-start_frame = 0
-# Last frame
+# Skip frames until start frame
+start_frame = 10
+# End at given frame
 end_frame = 0
 
 ## Setup
@@ -36,96 +36,49 @@ os.chdir(PATH.DATAPATH)
 os.mkdir(beePath)
 os.mkdir(beePath + 'single/')
 os.mkdir(beePath + 'multi/')
+os.mkdir(beePath + 'dump/')
 os.mkdir(beePath + 'single/bee/')
 os.mkdir(beePath + 'single/mask/')
+os.mkdir(beePath + 'single/overlay/')
 os.mkdir(beePath + 'multi/bee/')
 os.mkdir(beePath + 'multi/mask/')
+os.mkdir(beePath + 'multi/overlay/')
+os.mkdir(beePath + 'dump/multi/')
+os.mkdir(beePath + 'dump/single/')
+os.mkdir(beePath + 'dump/multi/bee')
+os.mkdir(beePath + 'dump/single/bee')
+os.mkdir(beePath + 'dump/single/overlay')
+os.mkdir(beePath + 'dump/multi/mask')
+os.mkdir(beePath + 'dump/single/mask')
+os.mkdir(beePath + 'dump/multi/overlay')
 
-# load background Image and crop light reflection
-bgImg_fullsize_color  = cv2.imread('background.png')[180:800, :]
-# resize for faster processing
-bgImg_color = cv2.resize(np.copy(bgImg_fullsize_color), None, None, scale, scale)
-# grayscale
-bgImg_gray = cv2.cvtColor(bgImg_color, cv2.COLOR_BGR2GRAY)
-# get height and width
-imgHeight, imgWidth = bgImg_gray.shape
 
+bgImg  = cv2.imread('background_3.png')[180:800, 2:654]
+videos = os.listdir('videos/')
+video_index = 1
+for video in videos:    
+    # loads video file
+    print(video)
+    cap = cv2.VideoCapture('videos/'  + video)
+    max_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    print("New video with " + str(max_frames) + ' frames')
+    print("working directory: " + os.getcwd())
+    end_frame =  int(max_frames)
+    # skips frames until defined start_frame
+    cap.set(1, start_frame)
 
-# loads video file
-cap = cv2.VideoCapture('output_2.mp4')
-print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-end_frame =  int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-cap.set(1, start_frame)
+    pool = ThreadPool(num_cpu)
+    frames = []
+    frame_indices = []
+    for frame_index in range(0, end_frame - start_frame):
+        # add all frames from one clip as arguments for pool
+        _, frame = cap.read()
+        frames.append(frame)
+        frame_indices.append(str(video_index) + "_" + str(frame_index))
+    video_index = video_index + 1
 
-for num_frame in range(0, end-start):
-    ## For each frame do
-    # load frame and crop light reflection
-    # frame_fullsize_color = cv2.imread(PATH.DATAPATH + 'snap4.png')[180:800, :]
-    ret, frame_fullsize_color = cap.read()
+pool.starmap(util.calc, zip(frames, frame_indices, itertools.repeat(beePath), itertools.repeat(production_run), itertools.repeat(bgImg), itertools.repeat(save_array)))
 
-    ## Cause video doesnt work 
-    frame_fullsize_color = cv2.imread('snap2.png')
-    frame_fullsize_color = frame_fullsize_color[180:800, :]
+pool.close()
+pool.join()
 
-    # resize for faster processing
-    frame_color = cv2.resize(np.copy(frame_fullsize_color), None, None, scale, scale)
-
-    # grayscale
-    frame_gray = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
-
-    # subtract background from frame
-    diff = cv2.subtract(frame_gray, bgImg_gray)
-
-    # clean artefacts from diff
-    _, diff_cleaned = cv2.threshold(diff, 25, 255, cv2.THRESH_TOZERO)
-
-    # make all non-black pixels white
-    _, mask = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)
-
-    ## form clusters
-    # predict number of bees by using typical beeBlopSize
-    numCluster = int(np.sum(np.sum(mask))/ 255 / beeBlopSize)
-    print('Num of bees in image: ' + str(numCluster))
-
-    # get all bee masks and corresponding bounding boxes plus intersection information
-    beeMasks, boundingBoxes, intersects = util.cluster(np.copy(mask), numCluster)
-
-    # beeMask applied on frame_fullsize_color
-    titles = []
-    images = []
-    index = 0
-    for beeMask in beeMasks:
-        # stores bounding box of given bee
-        bb = boundingBoxes[index]
-
-        # reduce beeMask and frame to bounding box
-        beeMask_bb = beeMask[int(bb[1]):int(bb[3]), int(bb[0]):int(bb[2])]
-        bee_color_bb = frame_fullsize_color[int(bb[1]):int(bb[3]), int(bb[0]):int(bb[2]), :]
-
-        # applies mask on all color channels
-        # colorBeeMask_bb = cv2.merge((beeMask_bb, beeMask_bb, beeMask_bb))
-        # bee_sceleton = np.multiply(bee_color, colorBeeMask_bb)
-    
-        titles.append('bee ' + str(index))
-        titles.append('mask ' + str(index))
-        images.append(bee_color_bb)
-        images.append(beeMask_bb)
-
-        if saveBees:
-            # changes folder in case of multi bees
-            prefix = 'multi/' if intersects[index] else 'single/'
-
-            cv2.imwrite(beePath + prefix + 'bee/' + str(index) + '.png', bee_color_bb)
-            cv2.imwrite(beePath + prefix + 'mask/' + str(index) + '.png', beeMask_bb)
-        
-        index = index + 1
-
-    if num_frame % 10 == 0:
-        for i in xrange(len(images)):
-            plt.subplot(len(beeMasks), 2, i+1), plt.imshow(images[i])
-            plt.title(titles[i])
-            plt.xticks([]),plt.yticks([])
-
-        plt.show()
-
-cv2.destroyAllWindows()
