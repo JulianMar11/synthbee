@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-os.chdir('/Users/Julian/Desktop/Dropbox/synthbeedata/')
+os.chdir('/Users/Julian/Desktop/Dropbox/synthbeedata/Raw/')
 
 cap = cv2.VideoCapture('output_2.mp4')
 
