@@ -4,6 +4,9 @@ import os
 from os import listdir, getcwd
 from os.path import isfile, join
 from imutils.object_detection import non_max_suppression
+import synthesizestochastic as sto
+from matplotlib import pyplot as plt
+
 
 #Bienenmanipulationen
 #http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_geometric_transformations/py_geometric_transformations.html
@@ -65,57 +68,154 @@ def getbackground():
     return resized
 
 def getonlinebee():
-    originalspath = PATH.DATAPATH + "beesonline/Pixels/"
+    originalspath = PATH.DATAPATH + "OnlineData/Bees/Pixels/"
+
+    filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
+    #filelist.sort()
+
+    r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
+
+
+    original = []
+    mask = []
+    replaced = []
+
+    string = filelist[3*r]
+    if string.endswith("_Original.jpg"):
+        substring = string[:-13]
+        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
+        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+        original = cv2.imread(originalspath + filelist[3*r])
+        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+    elif string.endswith("_Replaced.jpg"):
+        substring = string[:-13]
+        print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
+        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+        original = cv2.imread(originalspath + substring + "_Original.jpg")
+        replaced = cv2.imread(originalspath + filelist[3*r])
+
+    elif string.endswith("_Mask.jpg"):
+        substring = string[:-9]
+        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
+        mask = cv2.imread(originalspath + filelist[3*r])
+        original = cv2.imread(originalspath + substring + "_Original.jpg")
+        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+
+    mask = mask[:,:,0]
+    label = "Biene"
+
+    return original, mask, replaced, label
+
+
+def getPollen():
+    originalspath = PATH.DATAPATH + "OnlineData/Pollen/Pixels/"
+
+    filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
+    #filelist.sort()
+
+    r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
+
+
+    original = []
+    mask = []
+    replaced = []
+    string = filelist[3*r]
+    if string.endswith("_Original.jpg"):
+        substring = string[:-13]
+        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
+        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+        original = cv2.imread(originalspath + filelist[3*r])
+        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+    elif string.endswith("_Replaced.jpg"):
+        substring = string[:-13]
+        print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
+        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+        original = cv2.imread(originalspath + substring + "_Original.jpg")
+        replaced = cv2.imread(originalspath + filelist[3*r])
+
+    elif string.endswith("_Mask.jpg"):
+        substring = string[:-9]
+        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
+        mask = cv2.imread(originalspath + filelist[3*r])
+        original = cv2.imread(originalspath + substring + "_Original.jpg")
+        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+
+    label = "Polle"
+    mask = mask[:,:,0]
+
+
+
+    return original, mask, replaced, label
+
+def getMite():
+    originalspath = PATH.DATAPATH + "Mites/Pixels/"
 
     filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
     filelist.sort()
 
     r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
 
-    print("Opening:" + originalspath + filelist[3*r] +" and " +filelist[3*r+1] +" and "+ filelist[3*r+2])
-
-    original = []
-    mask = []
-    replaced = []
-    if filelist[3*r].endswith(".jpg"):
-        mask = cv2.imread(originalspath + filelist[3*r])
-    if filelist[3*r+1].endswith(".jpg"):
-        original = cv2.imread(originalspath + filelist[3*r+1])
-    if filelist[3*r+2].endswith(".jpg"):
-        replaced = cv2.imread(originalspath + filelist[3*r+2])
-
-    if "POLLE" in filelist[3*r]:
-        label = "2"
-    else:
-        label = "1"
-
     return original, mask, replaced, label
 
 
-def rotate(original, mask, replaced):
+def rotate(original, mask, category="BEE"):
     rows,cols,colors = original.shape
-    degree = np.random.random_integers(0,90,1)[0]
+    if category == "BEE":
+        degree = sto.rotationBee()
+    elif category == "POLLEN":
+        degree = sto.rotationPoll()
+    elif category == "MITE":
+        degree = sto.rotationMite()
+    else:
+        degree = sto.rotationBee()
 
     M = cv2.getRotationMatrix2D((cols/2,rows/2),degree,1)
 
     original = cv2.warpAffine(original,M,(cols,rows))
     mask = cv2.warpAffine(mask,M,(cols,rows))
-    replaced = cv2.warpAffine(replaced,M,(cols,rows))
 
-    return original, mask, replaced
+    return original, mask
 
-def flip(original, mask, replaced):
-    operations = np.random.random_integers(0,1,2)
-    if operations[0] == 1:
+def flip(original, mask, category="BEE"):
+    if category == "BEE":
+        a = sto.flipBee()
+        b = sto.flipBee()
+    elif category == "POLLEN":
+        a = sto.flipPoll()
+        b = sto.flipPoll()
+    elif category == "MITE":
+        a = sto.flipMite()
+        b = sto.flipMite()
+    else:
+        a = sto.flipBee()
+        b = sto.flipBee()
+    if a == 1:
         original=cv2.flip(original,1)
         mask=cv2.flip(mask,1)
-        replaced=cv2.flip(replaced,1)
-    if operations[1] == 1:
+    if b == 1:
         original=cv2.flip(original,0)
         mask=cv2.flip(mask,0)
-        replaced=cv2.flip(replaced,0)
+    return original, mask
 
-    return original, mask, replaced
+
+def resize(original, mask, category="BEE"):
+    if category == "BEE":
+        scalefactor = sto.scaleBee()
+    elif category == "POLLEN":
+        scalefactor = sto.scalePoll()
+    elif category == "MITE":
+        scalefactor = sto.scaleMite()
+    else:
+        scalefactor = sto.scaleBee()
+    w, h, c = original.shape
+    neww = int(round(scalefactor*w,0))
+    original = cv2.resize(original,(h, neww))
+    mask = cv2.resize(mask,(h, neww))
+    return original, mask
 
 
 def area(a, b):
@@ -124,27 +224,56 @@ def area(a, b):
     if (dx>=0) and (dy>=0):
         return dx*dy
 
-def resize(original, mask, replaced):
-    scalefactor = np.random.normal(1,0.3,1)[0]
-    scalefactor = max(0.5, scalefactor)
-    scalefactor = min(1.5, scalefactor)
+def placePolle(original, mask, op, mp):
+    height, width, channels = original.shape
+    h, w, c = op.shape
 
-    w, h, c = original.shape
-    print("RESIZING")
-    print(original.shape)
+    scalefactor = 0.5*((height/(6*h))+(width/(6*w)))
+
+    newh = int(round(scalefactor*h,0))
     neww = int(round(scalefactor*w,0))
-    original = cv2.resize(original,(h, neww))
-    mask = cv2.resize(mask,(h, neww))
-    replaced = cv2.resize(replaced,(h, neww))
-    print(original.shape)
-    return original, mask, replaced
 
-def placebee(background, original, mask, objects):
-    # This is where the CENTER of the airplane will be placed
-    width, height, channels = background.shape
-    size = np.random.random_integers(25,int(round(width/1.7,0)),1)[0]
-    size = min(size, width, height)
+    op = cv2.resize(op,(newh, neww))
+    mp = cv2.resize(mp,(newh, neww))
+    h, w, c = op.shape
+
+    vertical = height > width
+
+    if vertical:
+        (ym, xm) = (0.3*height/2,width/2)
+    else:
+        (ym, xm) = (height/2,0.3*width/2)
+
+
+    (ym, xm) = (int(round(ym,0)),int(round(xm,0)))
+    roi = original[ym:ym+h, xm:xm+w]
+
+    # Now create a mask of logo and create its inverse mask also
+    mp_inv = cv2.bitwise_not(mp)
+
+    # Now black-out the area of logo in ROI
+    img1_bg = cv2.bitwise_and(roi,roi,mask = mp_inv)
+
+    # Take only region of logo from logo image.
+    img2_fg = cv2.bitwise_and(op,op,mask = mp)
+
+    # Put logo in ROI and modify the main image
+    dst = cv2.add(img1_bg,img2_fg)
+
+    original[ym:ym+h, xm:xm+w] = dst
+
+    mask[ym:ym+h, xm:xm+w] = mp
+
+    rectpoint = (ym, xm, ym+h, xm+w)
+    return original, mask, rectpoint
+
+
+def placeBee(background, original, mask, objects):
+    size = sto.sizeBeeInBackground(background.shape)
+
+    width, height, color = background.shape
     w,h,c = original.shape
+
     if w >= h:
         neww = size
         newh = int(round(h*size/w,0))
@@ -187,11 +316,8 @@ def placebee(background, original, mask, objects):
             w = object['bottomright']['x'] - object['topleft']['x']
             h = object['bottomright']['y'] - object['topleft']['y']
 
-            array1 = np.array([[y1, x1, y2, x2],[y,x, y+h,x+w]])
-            array2 = np.array([[y,x, y+h,x+w],[y1, x1, y2, x2]])
 
             existingrec = Rectangle(x, y, x+w, y+h)
-            existingarea = w*h
 
             overlaparea = area(newrect, existingrec)
 
@@ -199,47 +325,9 @@ def placebee(background, original, mask, objects):
                 notfound = True
                 print("OVERLAP!!!!")
                 continue
-            # else:
-            #     if overlaparea / existingarea > 0.001:
-            #         print("Bestehende Box überlappt stark")
-            #         notfound = True
-            #     if overlaparea / newarea > 0.001:
-            #         print("Neue Box zu weit in bestehender drin")
-            #         notfound = True
-            #     #
-            # overlapy1 = max(y1,y)
-            # overlapx1 = max(x1,x)
-            #
-            # overlapy1 = min(y1,y)
-            # overlapx1 = min(x1,x)
-            #
-            # suppression1 = non_max_suppression(array1, probs=None, overlapThresh=0.1)
-            # suppression2 = non_max_suppression(array2, probs=None, overlapThresh=0.1)
-            #
-            # if len(suppression1)==1:
-            #     notfound = True
-            #     print("suppression1")
-            # if len(suppression2)==1:
-            #     notfound = True
-            #     print("suppression2")
-            # if ym+0.2*(y2-y1) < y+h and ym-0.2*(y2-y1) > y and xm+0.2*(x2-x1) < x+w and xm-0.2*(x2-x1) > x:
-            #     notfound = True
-            #     print("Center wäre in BBox")
-            # #NeueBox sehr groß
-            # if y1+0.2*h<=y and x1+0.2*w<=x and y2-0.2*h>=y+h and x2-0.2*w>=x+w:
-            #     notfound = True
-            #     print("Box würde bestehende Fläche einschließen")
-            # #NeueBox sehr klein
-            # if y1>y and x1>x and y2<y+h and x2<x+w:
-            #     notfound = True
-            #     print("Box liegt innerhalb bestehender Fläche")
-
-
-    #mask = 255 * np.ones(original.shape, original.dtype)
 
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
     mask = cv2.dilate(mask,kernel,iterations = 2)
-
     output = cv2.seamlessClone(original, background, mask, center, cv2.NORMAL_CLONE)
     rectpoints = (y1, x1, y2, x2)
     return output, rectpoints
@@ -254,12 +342,18 @@ def drawBBox(image, boxes):
         objid = object['Object_ID']
         outputstring = 'undefined'
         labelcolor = (70,148,3)
-        if object['label'] == "1":
+        if object['label'] == "Biene":
             labelcolor = (148,70,3) #BGR
             outputstring = "Biene_" + str(objid)
-        if object['label'] == "2":
-            labelcolor = (3,70,148) #BGR
-            outputstring = "Biene&Polle_" + str(objid)
+        elif object['label'] == "Polle":
+            labelcolor = (0,230,48) #BGR
+            outputstring = "Polle_" + str(objid)
+        elif object['label'] == "Milbe":
+            labelcolor = (230,10,148) #BGR
+            outputstring = "Milbe_" + str(objid)
+        else:
+            labelcolor = (255,255,255) #BGR
+            outputstring = "UNBEKANNTES OBJEKT_" + str(objid)
 
         cv2.putText(image,outputstring,(x,y-3),cv2.FONT_HERSHEY_PLAIN,1,labelcolor,1,cv2.LINE_AA)
         cv2.rectangle(image,(x,y),(x+w,y+h),labelcolor,2)
