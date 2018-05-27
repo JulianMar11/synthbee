@@ -4,8 +4,9 @@ import cv2
 import datetime
 from scipy.cluster.vq import kmeans2,vq
 import PATH
+import os
 
-def deleteBlops(mask, minBlopSize):
+def deleteBlops(mask, minBlopSize, maxBlopSize):
     """ Finds all blops smaller than minBlopSize and delets them from mask"""
     img, contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
@@ -14,7 +15,7 @@ def deleteBlops(mask, minBlopSize):
     for cnt in contours:
         # print("contour area")
         # print(cv2.contourArea(cnt))
-        if cv2.contourArea(cnt) < minBlopSize:
+        if cv2.contourArea(cnt) < minBlopSize or cv2.contourArea(cnt) > maxBlopSize :
             deleteIndices.append(i)
         i = i + 1
         
@@ -87,6 +88,7 @@ def cluster(mask, numCluster):
             continue
         intersects.append(False)
 
+
     return beeMasks, boundingBoxes, intersects
 
 
@@ -146,15 +148,22 @@ def boundingBoxesIntersect(bb1, bb2):
 
 
 
-def calc(frame, frame_index, beePath, production_run, bgImg, save_array):
+def calc(frame, frame_index, production_run, process_dir):
+    # each process saves his own folders
+    os.chdir("/home/bemootzer/Dokumente/SoftwareProjekte/Bienen/DATA")
+    os.chdir(process_dir)
+    
     ## Settings
     #global save_array
     # scale images for processing (Nevertheless all imgs are stored in best quality)
     scale = 1
     # Blops smaller than this will be removed
-    minBlopSize = int(12000 * scale * scale)
+    minBlopSize = int(17000 * scale * scale)
     # A Bee is supposed to be this big. Used to calculate number of clusters
-    beeBlopSize = int(17000 * scale * scale)
+    beeBlopSize = int(22000 * scale * scale)
+    # Blops bigger than this will be removed
+    maxBlopSize = int(24600 * scale * scale)
+
     # Threshold for differntiation (low if noise is low, high otherwise)
     diff_threshold = 25
     # True if imgs should be saved with more than one bee
@@ -162,12 +171,12 @@ def calc(frame, frame_index, beePath, production_run, bgImg, save_array):
     # Maximum bounding box area
     max_bb_area = 62500
     # Minimum bounding box area
-    min_bb_area = 22500
+    min_bb_area = 29000
     # True if bee imgs should be saved
     saveBees = True
 
     # load background Image and crop light reflection
-    bgImg_fullsize_color  = bgImg
+    bgImg_fullsize_color  = cv2.imread('../../background_3.png')[180:800, 2:654]
     # resize for faster processing
     # bgImg_color = cv2.resize(np.copy(bgImg_fullsize_color), None, None, scale, scale)
     bgImg_color = bgImg_fullsize_color
@@ -178,7 +187,7 @@ def calc(frame, frame_index, beePath, production_run, bgImg, save_array):
 
 
     try:
-        print(frame.shape)
+        #print(frame.shape)
         frame_fullsize_color = frame
         frame_fullsize_color = frame_fullsize_color[180:800, 0:652, :]
 
@@ -207,8 +216,7 @@ def calc(frame, frame_index, beePath, production_run, bgImg, save_array):
         _, mask_pre_blop_deletion = cv2.threshold(diff_cleaned, 25, 255, cv2.THRESH_BINARY)
 
         # delete blops
-        mask = deleteBlops(np.array(mask_pre_blop_deletion), minBlopSize)
-
+        mask = deleteBlops(np.array(mask_pre_blop_deletion), minBlopSize, maxBlopSize)    
 
         ## form clusters
         # predict number of bees by using typical beeBlopSize
@@ -264,21 +272,20 @@ def calc(frame, frame_index, beePath, production_run, bgImg, save_array):
                 prefix = prefix + 'multi/' if intersects[index] else prefix + 'single/'
 
                 # save bee
-                save_img_to_path = beePath + prefix + 'bee/' + frame_index + '_' + str(index) + '.png'
+                save_img_to_path = prefix + 'bee/' + frame_index + '_' + str(index) + '.png'
                 save_img_data = bee_color_bb
-                save_array.append([save_img_to_path, save_img_data])
+                cv2.imwrite(save_img_to_path, save_img_data)
+                # save_array.append([save_img_to_path, save_img_data])
                 # save mask
-                save_img_to_path = beePath + prefix + 'mask/' + frame_index + '_' + str(index) + '.png'
+                save_img_to_path = prefix + 'mask/' + frame_index + '_' + str(index) + '.png'
                 save_img_data = beeMask_bb
-                save_array.append([save_img_to_path, save_img_data])
+                cv2.imwrite(save_img_to_path, save_img_data)
+                # save_array.append([save_img_to_path, save_img_data])
                 # save overlay
-                save_img_to_path = beePath + prefix + 'overlay/' + frame_index + '_' + str(index) + '.png'
+                save_img_to_path = prefix + 'overlay/' + frame_index + '_' + str(index) + '.png'
                 save_img_data = bee_sceleton
-                save_array.append([save_img_to_path, save_img_data])
-
-
-                print("length: " + str(len(save_array)))
-            
+                cv2.imwrite(save_img_to_path, save_img_data)
+                # save_array.append([save_img_to_path, save_img_data])
                 
             index = index + 1
         
@@ -308,4 +315,6 @@ def calc(frame, frame_index, beePath, production_run, bgImg, save_array):
                 plt.xticks([]),plt.yticks([])
 
             plt.show()
-    except Exception as e: print(e)
+    except:
+        # Exception as e: print(e)
+        pass

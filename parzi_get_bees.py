@@ -5,10 +5,15 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import time
-from multiprocessing.dummy import Pool as ThreadPool
 import PATH
 import util
-import itertools
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
+def multiprocessing(func, frames, frame_indices, prod_run, proc_dir, workers):
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        res = executor.map(func, frames, frame_indices, prod_run, proc_dir  )
+    return list(res)
+
 
 # PATHES!
 # cwd: DATA
@@ -17,23 +22,20 @@ import itertools
 # DATA/background_3.png
 
 # number of cpus
-num_cpu = 4
+num_cpu = 3
 # no print commands if true
 production_run = True
 # first store all data in RAM
 save_array = []
 
-# Path to bee directory
-beePath = 'bees/' + str(datetime.datetime.now()) + '/'
-# Skip frames until start frame
-start_frame = 10
-# End at given frame
-end_frame = 0
-
 ## Setup
 # Create the specified directory
 os.chdir(PATH.DATAPATH)
-os.mkdir(beePath)
+# Path to folder where each process stores its data
+process_dir =  'bees/' + "multicore_" + str(datetime.datetime.now()) + '/'
+os.mkdir(process_dir)
+os.chdir(process_dir)
+beePath = ""
 os.mkdir(beePath + 'single/')
 os.mkdir(beePath + 'multi/')
 os.mkdir(beePath + 'dump/')
@@ -51,25 +53,29 @@ os.mkdir(beePath + 'dump/single/overlay')
 os.mkdir(beePath + 'dump/multi/mask')
 os.mkdir(beePath + 'dump/single/mask')
 os.mkdir(beePath + 'dump/multi/overlay')
+os.chdir("../../")
 
+# Skip frames until start frame
+start_frame = 10
+# End at given frame
+end_frame = 0
 
-bgImg  = cv2.imread('background_3.png')[180:800, 2:654]
 videos = os.listdir('videos/')
 video_index = 1
+
 for video in videos:    
+    frames = []
+    frame_indices = []
     # loads video file
     print(video)
     cap = cv2.VideoCapture('videos/'  + video)
     max_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     print("New video with " + str(max_frames) + ' frames')
     print("working directory: " + os.getcwd())
-    end_frame =  int(max_frames)
+    end_frame = int(max_frames)
     # skips frames until defined start_frame
     cap.set(1, start_frame)
-
-    pool = ThreadPool(num_cpu)
-    frames = []
-    frame_indices = []
+    
     for frame_index in range(0, end_frame - start_frame):
         # add all frames from one clip as arguments for pool
         _, frame = cap.read()
@@ -77,8 +83,13 @@ for video in videos:
         frame_indices.append(str(video_index) + "_" + str(frame_index))
     video_index = video_index + 1
 
-pool.starmap(util.calc, zip(frames, frame_indices, itertools.repeat(beePath), itertools.repeat(production_run), itertools.repeat(bgImg), itertools.repeat(save_array)))
+    ## Now there is a list of all frames of all videos
+    # def calc(frame, frame_index, production_run, process_dir):
+    N = len(frames)
+    print("amount of frames to be processed: " + str(N))
+    prod_run = [production_run for i in range(N) ]
+    proc_dir = [process_dir for i in range(N) ]
 
-pool.close()
-pool.join()
 
+    print("start of video number " + str(video_index) + "(" + video + ") " + " of " + str(len(videos)))
+    multiprocessing(util.calc, frames, frame_indices, prod_run, proc_dir, num_cpu )
