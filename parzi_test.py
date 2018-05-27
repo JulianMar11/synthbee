@@ -9,7 +9,7 @@ import os
 
 ## Settings
 # scale images for processing (Nevertheless all imgs are stored in best quality)
-scale = 0.5
+scale = 1
 # Size of the dilation "cursor"
 dilateRectDim = int(np.floor(scale*scale*24))
 # Path to bee directory
@@ -56,6 +56,7 @@ _, diff_cleaned = cv2.threshold(diff, 25, 255, cv2.THRESH_TOZERO)
 
 # erode artefacts from diff_clean
 diff_cleaned_eroded = cv2.erode(diff_cleaned, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilateRectDim, dilateRectDim)), iterations = 1)
+
 
 # dilate foreground from diff_cleand_eroded
 diff_cleaned_eroded_dilated = cv2.dilate(diff_cleaned_eroded, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilateRectDim, dilateRectDim)), iterations = 5)
