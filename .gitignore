@@ -23,8 +23,8 @@ __pycache__/common.cpython-36.pyc
 
 .idea/inspectionProfiles/Project_Default.xml
 
-keras-yolo3/model_data_darkflow
+neuronalnet/model_data_darkflow
 
-keras-yolo3/model_data
+neuronalnet/model_data
 
 .DS_Store
