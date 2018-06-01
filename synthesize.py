@@ -16,7 +16,7 @@ def addannotation(objects, annotations, box, label, frame, id):
     objects.append({
                 "label": str(label),
                 "Frame_ID":   frame+1,
-                "Object_ID": id+1,
+                "Bee_ID": id+1,
                 "topleft": {
                     "x": box[0],
                     "y": box[1]},
@@ -27,7 +27,7 @@ def addannotation(objects, annotations, box, label, frame, id):
     annotations.append({
                 "label": str(label),
                 "Frame_ID":  frame+1,
-                "Object_ID": id+1,
+                "Bee_ID": id+1,
                 "topleft": {
                     "x": box[0],
                     "y": box[1]},
@@ -36,26 +36,71 @@ def addannotation(objects, annotations, box, label, frame, id):
                     "y": box[3]}
             })
 
+def addbeeannotation(list, box, label, frame, beeid):
+    list.append({
+        "label": str(label),
+        "Frame_ID": frame + 1,
+        "Bee_ID": beeid + 1,
+        "topleft": {
+            "x": box[0],
+            "y": box[1]},
+        "bottomright": {
+            "x": box[2],
+            "y": box[3]}
+    })
+
+def copybeeparams(beeparams, annotations, objects):
+    for object in beeparams:
+        annotations.append({
+                "label": object['label'],
+                "Frame_ID":  object['Frame_ID'],
+                "Bee_ID": object['Bee_ID'],
+                "topleft": {
+                    "x": object['topleft']['x'],
+                    "y": object['topleft']['y']},
+                "bottomright": {
+                    "x": object['bottomright']['x'],
+                    "y": object['bottomright']['y']}
+            })
+        objects.append({
+                "label": object['label'],
+                "Frame_ID":  object['Frame_ID'],
+                "Bee_ID": object['Bee_ID'],
+                "topleft": {
+                    "x": object['topleft']['x'],
+                    "y": object['topleft']['y']},
+                "bottomright": {
+                    "x": object['bottomright']['x'],
+                    "y": object['bottomright']['y']}
+            })
+
 def synthesize(anzahl):
     annotations = []
+    objid = 0
+    savepath = PATH.DATAPATH + "SynthTrainingData/"
+
     for a in range(0,anzahl):
         objects = list()
-
-
 
         #Hintergrund wählen
         image = su.getbackground()
         height,width,colors = image.shape
-        print(image.shape)
-
         imagemask = np.zeros((height, width), dtype=int)
 
-        print(imagemask.shape)
 
         for b in range(0,sto.putBees()):
             #Bienenbild wählen
             original, mask, replaced, label = su.getonlinebee()
+            beeparams = []
+
+            # Gesamtbienenbild manipulieren
+            original, mask = su.flip(original, mask, 'BEE')
+            original, mask = su.rotate(original, mask, 'BEE')
+            #original, mask = su.resize(original, mask, 'BEE')
+
+            _ , mask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
             print(mask.shape)
+
             #Pollen
             if sto.putPoll():
                 anz = sto.anzPolls()
@@ -66,23 +111,22 @@ def synthesize(anzahl):
                     print(mp.shape)
 
                     #Bild manipulieren
-                    #op, mp = su.flip(op, mp,'POLLEN')
-                    #op, mp = su.rotate(op, mp,'POLLEN')
-                    #op, mp = su.resize(op, mp,'POLLEN')
+                    op, mp = su.flip(op, mp,'POLLEN')
+                    op, mp = su.rotate(op, mp,'POLLEN')
+                    op, mp = su.resize(op, mp,'POLLEN')
+                    _, mp = cv2.threshold(mp,127,255,cv2.THRESH_BINARY)
 
                     #Polle einzeichnen
-                    original, mask, box = su.placePolle(original, mask, op, mp)
-
-                    savepath = PATH.DATAPATH + "SynthTrainingData/"
-                    print("Saving image")
-                    cv2.imwrite(savepath + str(a) + "_original.jpg", original)
-                    cv2.imwrite(savepath + str(a) + "_mask.jpg", mask)
-
-                    #addannotation(objects, annotations, box, lp, a, c)
-
+                    originalnew, masknew, box, exception = su.place_Parzipolle(original, mask, op, mp)
+                    if not exception:
+                        original = originalnew
+                        mask = masknew
+                        cv2.imwrite(savepath + str(a) + "_original.jpg", original)
+                        cv2.imwrite(savepath + str(a) + "_mask.jpg", mask)
+                        addbeeannotation(beeparams, box, lp, a, b)
 
             #Milbe
-            if False: #sto.putMite():
+            if sto.putMite():
                 print("putting Mite")
                 #ChooseMite
                 om, mm, rm, lm = su.getMite()
@@ -90,27 +134,29 @@ def synthesize(anzahl):
                 om, mm = su.flip(om, mm,'MITE')
                 om, mm = su.rotate(om, mm,'MITE')
                 om, mm = su.resize(om, mm,'MITE')
+                _, mm = cv2.threshold(mm,127,255,cv2.THRESH_BINARY)
 
                 #AddMite
-                original, mask, box = su.placeMite(original, mask, om, mm)
-                addannotation(objects, annotations, box, lm, a, c)
+                originalnew, masknew, box, exception = su.place_Mite(original, mask, om, mm)
+                if not exception:
+                    original = originalnew
+                    mask = masknew
+                    cv2.imwrite(savepath + str(a) + "_original.jpg", original)
+                    cv2.imwrite(savepath + str(a) + "_mask.jpg", mask)
+                    addbeeannotation(beeparams, box, lm, a, b)
 
-            # #Gesamtbienenbild manipulieren
-            # original, mask = su.flip(original, mask, 'BEE')
-            # original, mask = su.rotate(original, mask, 'BEE')
-            # original, mask = su.resize(original, mask, 'BEE')
-            #
-            #
-            # #Biene einzeichnen
-            # image, box = su.placeBee(image, original, mask, objects)
-            # addannotation(objects, annotations, box, label, a, b)
+            #Biene einzeichnen
+            image, box, correctbeeparams = su.placeBee(image, original, mask, objects, beeparams)
+            beeparams = []
+            copybeeparams(correctbeeparams, annotations,objects)
+            addannotation(objects, annotations, box, label, a, b)
 
 
-        savepath = PATH.DATAPATH + "SynthTrainingData/"
-        #print("Saving image")
-        #cv2.imwrite(savepath + str(a) + "_synth.jpg", image)
-        #bbox = su.drawBBox(image, objects)
-        #cv2.imwrite(savepath + str(a) + "_synth_bbox.jpg", bbox)
+
+        print("Saving image")
+        cv2.imwrite(savepath + str(a) + "_synth.jpg", image)
+        bbox = su.drawBBox(image, objects)
+        cv2.imwrite(savepath + str(a) + "_synth_bbox.jpg", bbox)
 
     return annotations
 
