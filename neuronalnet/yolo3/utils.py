@@ -5,6 +5,7 @@ from functools import reduce
 from PIL import Image
 import numpy as np
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+import cv2
 
 def compose(*funcs):
     """Compose arbitrarily many functions, evaluated left to right.
@@ -36,6 +37,8 @@ def get_random_data(annotation_line, input_shape, max_boxes=20, jitter=.3, hue=.
     '''random preprocessing for real-time data augmentation'''
     line = annotation_line.split(' ')
     image = Image.open(line[0])
+    if(not image or image.size[0] < 1):
+        print("probleme mit line: ", line)
     iw, ih = image.size
     box = np.array([np.array(list(map(int,box.split(',')))) for box in line[1:]])
 
@@ -76,10 +79,18 @@ def get_random_data(annotation_line, input_shape, max_boxes=20, jitter=.3, hue=.
     x[x<0] = 0
     image_data = hsv_to_rgb(x) # numpy array, 0 to 1
 
+    cv2.imshow("sdfds", image_data)
+    cv2.waitKey(0)
+
+    print("box")
+    print(box)
+    print("shape of image")
+    print(image_data.shape)
+
     # correct boxes
     np.random.shuffle(box)
-    box[:, [0,2]] = box[:, [0,2]]*nw/iw + dx
-    box[:, [1,3]] = box[:, [1,3]]*nh/ih + dy
+    box[:, [0,2]] = box[:, [0,2]] * nw/iw + dx
+    box[:, [1,3]] = box[:, [1,3]] * nh/ih + dy
     if flip: box[:, [0,2]] = w - box[:, [2,0]]
     box[:, 0:2][box[:, 0:2]<0] = 0
     box[:, 2][box[:, 2]>w] = w
@@ -90,5 +101,11 @@ def get_random_data(annotation_line, input_shape, max_boxes=20, jitter=.3, hue=.
     if len(box)>max_boxes: box = box[:max_boxes]
     box_data = np.zeros((max_boxes,5))
     box_data[:len(box)] = box
+  
+#x_min,y_min,x_max,y_max,class_id
+    img_parzi = np.array(image_data)
+    cv2.rectangle(img_parzi, (box[0][0],box[0][1]), (box[0][2],box[0][3]), 34)
+    cv2.imshow("sdfdsf", img_parzi)
+    cv2.waitKey(0)
 
     return image_data, box_data

@@ -20,11 +20,23 @@ from yolo3.utils import letterbox_image
 
 class YOLO(object):
     def __init__(self):
-        self.model_path = 'model_data/yolov3-320.h5' # model path or trained weights path
-        self.anchors_path = 'model_data/yolo_anchors.txt'
-        self.classes_path = 'model_data/coco_classes.txt'
-        self.score = 0.3
-        self.iou = 0.5
+        os.chdir("/home/bemootzer/BIENEN/PY/synthbee/neuronalnet")
+        
+      #  self.model_path = 'model_data/yolov3-320.h5' # model path or trained weights path
+      #  self.anchors_path =  "model_data/yolo_anchors.txt" #'model_data/yolo_anchors.txt'
+      #  self.classes_path = 'model_data/coco_classes.txt'
+
+        self.model_path = "logs/2018-06-03 20:49:41.659131ep009-loss12.681-val_loss12.797.h5"
+        self.classes_path = 'input/parzi_classnames.txt'
+        self.anchors_path = 'input/parzi_anchors.txt'
+
+        
+        #self.score = 0.3
+        #self.iou = 0.5
+        
+        self.score = 0.01
+        self.iou = 0.2
+        
         self.class_names = self._get_class()
         self.anchors = self._get_anchors()
         self.sess = K.get_session()
@@ -111,7 +123,7 @@ class YOLO(object):
 
         print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
-        font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
+        font = ImageFont.truetype(font='/home/bemootzer/.local/share/fonts/Caveat-Bold.ttf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
 

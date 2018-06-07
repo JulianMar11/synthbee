@@ -44,9 +44,9 @@ def load_subframe_metadata(path):
 # DATA/background_3.png
 
 # number of cpus
-num_cpu = 3
+num_cpu = 4
 # no print commands if true
-production_run = True
+production_run = False
 ## Data bucket
 # video files *.mp4 and settings.txt
 data_dir = "/home/bemootzer/Dokumente/SoftwareProjekte/Bienen/DATA"
@@ -106,9 +106,12 @@ for video in videos:
     # skips frames until defined start_frame
     cap.set(1, start_frame)
     
-    for frame_index in range(0, end_frame - start_frame):
+    for frame_index in range(0, end_frame):
         # add all frames from one clip as arguments for pool
+        if frame_index < start_frame:
+            continue
         _, frame = cap.read()
+
 
         subframe_index = 0
         for subframe in subframes:
@@ -127,5 +130,9 @@ for video in videos:
     proc_data_dir = [data_dir for i in range(N) ]
 
     print("start of video number " + str(video_index) + " - " + str(max_frames) + " (" + video + ") " + " of " + str(len(videos)))
-    multiprocessing(util.calc, frames, frame_indices, proc_subframes, proc_prod_run, proc_data_dir, proc_output_dir, proc_bg_img_path, num_cpu )
+    if production_run:
+        multiprocessing(util.calc, frames, frame_indices, proc_subframes, proc_prod_run, proc_data_dir, proc_output_dir, proc_bg_img_path, num_cpu )
+    else:
+        while len(frames) > 0:
+            util.calc(frames.pop(), frame_indices.pop(), proc_subframes.pop(), proc_prod_run.pop(), proc_data_dir.pop(), proc_output_dir.pop(), proc_bg_img_path.pop())
 

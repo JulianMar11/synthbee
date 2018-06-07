@@ -156,20 +156,18 @@ def calc(frame, frame_index, sub_frame, prod_run, data_dir, output_dir, bg_img_p
     # scale images for processing (Nevertheless all imgs are stored in best quality)
     scale = 1
     # Blops smaller than this will be removed
-    minBlopSize = int(17000 * scale * scale)
+    minBlopSize = int(11500 * scale * scale)
     # A Bee is supposed to be this big. Used to calculate number of clusters
-    beeBlopSize = int(22000 * scale * scale)
+    beeBlopSize = int(13500 * scale * scale)
     # Blops bigger than this will be removed
-    maxBlopSize = int(24600 * scale * scale)
+    maxBlopSize = int(16500 * scale * scale)
 
-    # Threshold for differntiation (low if noise is low, high otherwise)
-    diff_threshold = 25
     # True if imgs should be saved with more than one bee
     saveCollidingBoundingBoxes = True
     # Maximum bounding box area
-    max_bb_area = 62500
+    max_bb_area = 60000
     # Minimum bounding box area
-    min_bb_area = 29000
+    min_bb_area = 20000
     # True if bee imgs should be saved
     saveBees = True
 
@@ -183,134 +181,134 @@ def calc(frame, frame_index, sub_frame, prod_run, data_dir, output_dir, bg_img_p
     # get height and width
     imgHeight, imgWidth = bgImg_gray.shape
 
-    #try:
-    #print(frame.shape)
-    frame_fullsize_color = frame
-    frame_fullsize_color = frame_fullsize_color[int(sub_frame[0]):int(sub_frame[1]), int(sub_frame[2]):int(sub_frame[3]), :]
-    if(not prod_run):
-        print("shape frame: ")
-        print(frame_fullsize_color.shape)
-        print("shape background: ")
-        print(bgImg_fullsize_color.shape)
+    try:
+        #print(frame.shape)
+        frame_fullsize_color = frame
+        frame_fullsize_color = frame_fullsize_color[int(sub_frame[0]):int(sub_frame[1]), int(sub_frame[2]):int(sub_frame[3]), :]
+        #if(not prod_run):
+        #    print("shape frame: ")
+        #    print(frame_fullsize_color.shape)
+        #    print("shape background: ")
+        #    print(bgImg_fullsize_color.shape)
 
-    # resize for faster processing
-    # frame_color = cv2.resize(np.copy(frame_fullsize_color), None, None, scale, scale)
-    frame_color = frame_fullsize_color
+        # resize for faster processing
+        # frame_color = cv2.resize(np.copy(frame_fullsize_color), None, None, scale, scale)
+        frame_color = frame_fullsize_color
 
-    # grayscale
-    frame_gray = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
-
-
-    # subtract background from frame
-    diff = cv2.subtract(bgImg_gray, frame_gray)
-
-    # clean artefacts from diff
-    _, diff_cleaned = cv2.threshold(diff, 50, 255, cv2.THRESH_TOZERO)
+        # grayscale
+        frame_gray = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
 
 
-    # make all non-black pixels white 
-    _, mask_pre_blop_deletion = cv2.threshold(diff_cleaned, 25, 255, cv2.THRESH_BINARY)
+        # subtract background from frame
+        diff = cv2.subtract(bgImg_gray, frame_gray)
 
-    # delete blops
-    mask = deleteBlops(np.array(mask_pre_blop_deletion), minBlopSize, maxBlopSize)    
+        # make all non-black pixels white. High number delets wings.
+        #_, mask_pre_blop_deletion = cv2.threshold(diff_cleaned, 50, 255, cv2.THRESH_BINARY)
+        _, mask_pre_blop_deletion = cv2.threshold(diff, 70, 255, cv2.THRESH_BINARY)
 
-    ## form clusters
-    # predict number of bees by using typical beeBlopSize
-    numCluster = int(round(np.sum(np.sum(mask))/ 255 / beeBlopSize))
-    if not prod_run:
-        print('Num of bees in image: ' + str(numCluster))
+        # delete blops
+        mask = deleteBlops(np.array(mask_pre_blop_deletion), minBlopSize, maxBlopSize)    
 
-    # get all bee masks and corresponding bounding boxes plus intersection information
-    beeMasks, boundingBoxes, intersects = cluster(np.copy(mask), numCluster)
-    
-    if not prod_run:
-        bb_img = np.array(frame_fullsize_color)
-        # print colorful bounding boxes
-        color = 145
-        for bb in boundingBoxes:
-            color = color + 140
-            cv2.rectangle(bb_img, (int(bb[0]), int(bb[1])), (int(bb[2]), int(bb[3])), [color % 240, color % 140, color % 80], 5)
+        ## form clusters
+        # predict number of bees by using typical beeBlopSize
+        numCluster = int(round(np.sum(np.sum(mask))/ 255 / beeBlopSize))
+        if numCluster == 0:
+            return
+        if not prod_run:
+            print('Num of bees in image: ' + str(numCluster))
+
+        # get all bee masks and corresponding bounding boxes plus intersection information
+        beeMasks, boundingBoxes, intersects = cluster(np.copy(mask), numCluster)
         
-    # beeMask applied on frame_fullsize_color
-    titles = []
-    images = []
-    index = 0
-    for beeMask in beeMasks:
-        # stores bounding box of given bee
-        bb = boundingBoxes[index]
-
-        # reduce beeMask and frame to bounding box
-        beeMask_bb = beeMask[int(bb[1]):int(bb[3]), int(bb[0]):int(bb[2])]
-        bee_color_bb = frame_fullsize_color[int(bb[1]):int(bb[3]), int(bb[0]):int(bb[2]), :]
-
-        # applies mask on all color channels
-        bee_color_bb[:,:,0] = np.multiply(bee_color_bb[:,:,0], beeMask_bb / 255)
-        bee_color_bb[:,:,1] = np.multiply(bee_color_bb[:,:,1], beeMask_bb / 255)
-        bee_color_bb[:,:,2] = np.multiply(bee_color_bb[:,:,2], beeMask_bb / 255)
-
-        bee_sceleton = bee_color_bb
-    
         if not prod_run:
-            titles.append('bee ' + str(index))
-            titles.append('mask ' + str(index))
-            images.append(bee_color_bb)
-            images.append(beeMask_bb)
-
-        if saveBees:
-            bb_area = (bb[2]-bb[0])*(bb[3]-bb[1])
-            # changes path to dump if rect is close to edges or too small / too big
-            if bb_area < min_bb_area or bb_area > max_bb_area or bb[0] <= 5 or bb[2] + 5 >= mask.shape[1] or bb[1] <= 5 or bb[3] + 5 >= mask.shape[0]:    
-                prefix = 'dump/' 
-            else:
-                prefix = '' # if intersects[index] else 'single/'
-
-            # change folder if multiple bees on bounding rect
-            prefix = prefix + 'multi/' if intersects[index] else prefix + 'single/'
-
-            # save bee
-            save_img_to_path = prefix + 'bee/' + frame_index + '_' + str(index) + '.png'
-            save_img_data = bee_color_bb
-            cv2.imwrite(save_img_to_path, save_img_data)
-            # save_array.append([save_img_to_path, save_img_data])
-            # save mask
-            save_img_to_path = prefix + 'mask/' + frame_index + '_' + str(index) + '.png'
-            save_img_data = beeMask_bb
-            cv2.imwrite(save_img_to_path, save_img_data)
-            # save_array.append([save_img_to_path, save_img_data])
-            # save overlay
-            save_img_to_path = prefix + 'overlay/' + frame_index + '_' + str(index) + '.png'
-            save_img_data = bee_sceleton
-            cv2.imwrite(save_img_to_path, save_img_data)
-            # save_array.append([save_img_to_path, save_img_data])
+            bb_img = np.array(frame_fullsize_color)
+            # print colorful bounding boxes
+            color = 145
+            for bb in boundingBoxes:
+                color = color + 140
+                cv2.rectangle(bb_img, (int(bb[0]), int(bb[1])), (int(bb[2]), int(bb[3])), [color % 240, color % 140, color % 80], 5)
             
-        index = index + 1
-    
+        # beeMask applied on frame_fullsize_color
+        titles = []
+        images = []
+        index = 0
+        for beeMask in beeMasks:
+            # stores bounding box of given bee
+            bb = boundingBoxes[index]
+
+            # reduce beeMask and frame to bounding box
+            beeMask_bb = beeMask[int(bb[1]):int(bb[3]), int(bb[0]):int(bb[2])]
+            bee_color_bb = frame_fullsize_color[int(bb[1]):int(bb[3]), int(bb[0]):int(bb[2]), :]
+
+            # applies mask on all color channels
+            bee_color_bb[:,:,0] = np.multiply(bee_color_bb[:,:,0], beeMask_bb / 255)
+            bee_color_bb[:,:,1] = np.multiply(bee_color_bb[:,:,1], beeMask_bb / 255)
+            bee_color_bb[:,:,2] = np.multiply(bee_color_bb[:,:,2], beeMask_bb / 255)
+
+            bee_sceleton = bee_color_bb
+        
+            if not prod_run:
+                titles.append('bee ' + str(index))
+                titles.append('mask ' + str(index))
+                images.append(bee_color_bb)
+                images.append(beeMask_bb)
+
+            if saveBees:
+                bb_area = (bb[2]-bb[0])*(bb[3]-bb[1])
+                # changes path to dump if rect is close to edges or too small / too big
+                if bb_area < min_bb_area or bb_area > max_bb_area or bb[0] <= 5 or bb[2] + 5 >= mask.shape[1] or bb[1] <= 5 or bb[3] + 5 >= mask.shape[0]:    
+                    prefix = 'dump/' 
+                else:
+                    prefix = '' # if intersects[index] else 'single/'
+
+                # change folder if multiple bees on bounding rect
+                prefix = prefix + 'multi/' if intersects[index] else prefix + 'single/'
+
+                # save bee
+                save_img_to_path = prefix + 'bee/' + frame_index + '_' + str(index) + '.png'
+                save_img_data = bee_color_bb
+                cv2.imwrite(save_img_to_path, save_img_data)
+                # save_array.append([save_img_to_path, save_img_data])
+                # save mask
+                save_img_to_path = prefix + 'mask/' + frame_index + '_' + str(index) + '.png'
+                save_img_data = beeMask_bb
+                cv2.imwrite(save_img_to_path, save_img_data)
+                # save_array.append([save_img_to_path, save_img_data])
+                # save overlay
+                save_img_to_path = prefix + 'overlay/' + frame_index + '_' + str(index) + '.png'
+                save_img_data = bee_sceleton
+                cv2.imwrite(save_img_to_path, save_img_data)
+                # save_array.append([save_img_to_path, save_img_data])
+                
+            index = index + 1
+        
+            if not prod_run:
+                cv2.destroyAllWindows()
+
+        #if not prod_run:
+        #    cv2.imshow("current", bb_img)
+        #    cv2.waitKey(1)
+
         if not prod_run:
-            cv2.destroyAllWindows()
+            titles = [ 
+                #background', 
+                'frame', 'diff', 'mask_pre_blop_deletion', 'mask', 'bb']
+            images = [
+                # bgImg_gray, 
+                frame_gray, 
+                diff, 
+                mask_pre_blop_deletion, 
+                mask,
+                bb_img
+                ]
 
-    if not prod_run:
-        cv2.imshow("current", bb_img)
-        cv2.waitKey(1)
+            for i in range(len(titles)):
+                plt.subplot(2, 3, i+1), plt.imshow(images[i], 'gray')
+                plt.title(titles[i])
+                plt.xticks([]),plt.yticks([])
 
-    if not prod_run:
-        titles = ['background', 'frame', 'mog2', 'diff', 'diff_cleaned', 'mask_pre_blop_deletion', 'mask', 'bb']
-        images = [
-            bgImg_gray, 
-            frame_gray, 
-            fgmask, 
-            diff, 
-            diff_cleaned, 
-            mask_pre_blop_deletion, 
-            mask,
-            bb_img
-            ]
-
-        for i in range(len(titles)):
-            plt.subplot(3, 3, i+1), plt.imshow(images[i], 'gray')
-            plt.title(titles[i])
-            plt.xticks([]),plt.yticks([])
-
-        plt.show()
-  # except:
-        # Exception as e: print(e)
-   #     pass
+            plt.show()
+        #   cv2.waitKey(0)
+    except:
+        #Exception as e: print(e)
+        pass
