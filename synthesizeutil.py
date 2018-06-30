@@ -39,9 +39,9 @@ def getbackground():
         themepath= originalspath + folders[randomfolder] + "/"
         filelist = [f for f in listdir(themepath) if isfile(join(themepath, f))]
         r = np.random.random_integers(0,len(filelist)-1,1)[0]
-        print("Opening:" + themepath + filelist[r])
+        #print("Opening:" + themepath + filelist[r])
 
-        if filelist[r].endswith(".jpg"):
+        if filelist[r].endswith(".jpeg") or filelist[r].endswith(".jpg") or filelist[r].endswith(".png"):
 
             image = cv2.imread(themepath + filelist[r])
             notfound = False
@@ -66,134 +66,172 @@ def getbackground():
                     resizewidth = width
                     resizeheight = height
             resized = cv2.resize(image,(resizeheight, resizewidth) ,interpolation = cv2.INTER_LINEAR)
-            print("Resized background from " + str(image.shape) + " to " + str(resized.shape))
+            #print("Resized background from " + str(image.shape) + " to " + str(resized.shape))
     return resized
 
-def getonlinebee():
-    originalspath = PATH.DATAPATH + "OnlineData/Bees/Pixels/"
-
-    filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
-    #filelist.sort()
-
-    r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
+def getbee():
+    exception = False
+    try:
+        if sto.internetbee():
+            originalspath = PATH.DATAPATH + "OnlineData/Bees/Pixels/"
 
 
-    original = []
-    mask = []
-    replaced = []
+            filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
+            #filelist.sort()
 
-    string = filelist[3*r]
-    if string.endswith("_Original.jpg"):
-        substring = string[:-13]
-        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
-        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
-        original = cv2.imread(originalspath + filelist[3*r])
-        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
-
-    elif string.endswith("_Replaced.jpg"):
-        substring = string[:-13]
-        print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
-        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
-        original = cv2.imread(originalspath + substring + "_Original.jpg")
-        replaced = cv2.imread(originalspath + filelist[3*r])
-
-    elif string.endswith("_Mask.jpg"):
-        substring = string[:-9]
-        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
-        mask = cv2.imread(originalspath + filelist[3*r])
-        original = cv2.imread(originalspath + substring + "_Original.jpg")
-        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+            r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
 
 
-    mask = mask[:,:,0]
-    label = "Biene"
+            original = []
+            mask = []
+            replaced = []
 
-    return original, mask, replaced, label
+            string = filelist[3*r]
+            if string.endswith("_Original.jpg"):
+                substring = string[:-13]
+                #print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
+                mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+                original = cv2.imread(originalspath + filelist[3*r])
+                replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+            elif string.endswith("_Replaced.jpg"):
+                substring = string[:-13]
+                #print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
+                mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+                original = cv2.imread(originalspath + substring + "_Original.jpg")
+                replaced = cv2.imread(originalspath + filelist[3*r])
+
+            elif string.endswith("_Mask.jpg"):
+                substring = string[:-9]
+                #print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
+                mask = cv2.imread(originalspath + filelist[3*r])
+                original = cv2.imread(originalspath + substring + "_Original.jpg")
+                replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+
+            mask = mask[:,:,0]
+            label = "Biene"
+
+            return original, mask, replaced, label, exception
+        else:
+            originalspath1 = PATH.DATAPATH + "OnlineData/bienen_sample/single/bee/"
+            originalspath2 = PATH.DATAPATH + "OnlineData/bienen_sample/single/mask/"
+            originalspath3 = PATH.DATAPATH + "OnlineData/bienen_sample/single/overlay/"
+
+            filelist = [f for f in listdir(originalspath1) if isfile(join(originalspath1, f))]
+
+            r = np.random.random_integers(0,(len(filelist)-1),1)[0]
+
+            original = cv2.imread(originalspath1 + filelist[r])
+            #print(originalspath1 + filelist[r])
+            #print(originalspath2 + filelist[r])
+            #print(originalspath3 + filelist[r])
+
+            mask = cv2.imread(originalspath2 + filelist[r])
+            replaced = cv2.imread(originalspath3 + filelist[r])
+
+            mask = mask[:,:,0]
+            label = "Biene"
+
+            return original, mask, replaced, label, exception
+    except:
+        exception = True
+        return [],[],[],[],exception
+
 
 
 def getPollen():
-    originalspath = PATH.DATAPATH + "OnlineData/Pollen/Pixels/"
+    exception = False
 
-    filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
-    #filelist.sort()
+    try:
+        originalspath = PATH.DATAPATH + "OnlineData/Pollen/Pixels/"
 
-    r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
+        filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
 
-
-    original = []
-    mask = []
-    replaced = []
-    string = filelist[3*r]
-    if string.endswith("_Original.jpg"):
-        substring = string[:-13]
-        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
-        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
-        original = cv2.imread(originalspath + filelist[3*r])
-        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
-
-    elif string.endswith("_Replaced.jpg"):
-        substring = string[:-13]
-        print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
-        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
-        original = cv2.imread(originalspath + substring + "_Original.jpg")
-        replaced = cv2.imread(originalspath + filelist[3*r])
-
-    elif string.endswith("_Mask.jpg"):
-        substring = string[:-9]
-        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
-        mask = cv2.imread(originalspath + filelist[3*r])
-        original = cv2.imread(originalspath + substring + "_Original.jpg")
-        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+        r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
 
 
-    label = "Polle"
-    mask = mask[:,:,0]
-    _, binmask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
+        original = []
+        mask = []
+        replaced = []
+        string = filelist[3*r]
+        if string.endswith("_Original.jpg"):
+            substring = string[:-13]
+            #print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
+            mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+            original = cv2.imread(originalspath + filelist[3*r])
+            replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+        elif string.endswith("_Replaced.jpg"):
+            substring = string[:-13]
+            #print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
+            mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+            original = cv2.imread(originalspath + substring + "_Original.jpg")
+            replaced = cv2.imread(originalspath + filelist[3*r])
+
+        elif string.endswith("_Mask.jpg"):
+            substring = string[:-9]
+            #print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
+            mask = cv2.imread(originalspath + filelist[3*r])
+            original = cv2.imread(originalspath + substring + "_Original.jpg")
+            replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
 
 
-    return original, mask, replaced, label
+        label = "Polle"
+        mask = mask[:,:,0]
+        _, binmask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
+
+
+        return original, mask, replaced, label, exception
+    except:
+        exception = True
+        return [],[],[],[],exception
 
 def getMite():
-    originalspath = PATH.DATAPATH + "OnlineData/Mites/Pixels/"
+    exception = False
 
-    filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
-    #filelist.sort()
+    try:
+        originalspath = PATH.DATAPATH + "OnlineData/Mites/Pixels/"
 
-    r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
+        filelist = [f for f in listdir(originalspath) if isfile(join(originalspath, f))]
 
-
-    original = []
-    mask = []
-    replaced = []
-    string = filelist[3*r]
-    if string.endswith("_Original.jpg"):
-        substring = string[:-13]
-        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
-        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
-        original = cv2.imread(originalspath + filelist[3*r])
-        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
-
-    elif string.endswith("_Replaced.jpg"):
-        substring = string[:-13]
-        print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
-        mask = cv2.imread(originalspath + substring + "_Mask.jpg")
-        original = cv2.imread(originalspath + substring + "_Original.jpg")
-        replaced = cv2.imread(originalspath + filelist[3*r])
-
-    elif string.endswith("_Mask.jpg"):
-        substring = string[:-9]
-        print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
-        mask = cv2.imread(originalspath + filelist[3*r])
-        original = cv2.imread(originalspath + substring + "_Original.jpg")
-        replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+        r = np.random.random_integers(0,(len(filelist)-1)/3,1)[0]
 
 
-    label = "Milbe"
-    mask = mask[:,:,0]
-    _, binmask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
+        original = []
+        mask = []
+        replaced = []
+        string = filelist[3*r]
+        if string.endswith("_Original.jpg"):
+            substring = string[:-13]
+            #print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Mask.jpg" +" and "+ substring + "_Replaced.jpg")
+            mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+            original = cv2.imread(originalspath + filelist[3*r])
+            replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
 
-    return original, binmask, replaced, label
+        elif string.endswith("_Replaced.jpg"):
+            substring = string[:-13]
+            #print("Opening:" + originalspath + substring + "_Mask.jpg" +" and " + substring + "_Original.jpg"+" and " +filelist[3*r])
+            mask = cv2.imread(originalspath + substring + "_Mask.jpg")
+            original = cv2.imread(originalspath + substring + "_Original.jpg")
+            replaced = cv2.imread(originalspath + filelist[3*r])
 
+        elif string.endswith("_Mask.jpg"):
+            substring = string[:-9]
+            #print("Opening:" + originalspath + filelist[3*r] +" and " + substring + "_Original.jpg"+" and " + substring + "_Replaced.jpg")
+            mask = cv2.imread(originalspath + filelist[3*r])
+            original = cv2.imread(originalspath + substring + "_Original.jpg")
+            replaced = cv2.imread(originalspath + substring + "_Replaced.jpg")
+
+
+        label = "Milbe"
+        mask = mask[:,:,0]
+        _, binmask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
+
+        return original, binmask, replaced, label, exception
+    except:
+        exception = True
+        return [],[],[],[],exception
 
 def rotate(original, mask, category="BEE"):
     rows,cols,colors = original.shape
@@ -248,6 +286,43 @@ def resize(original, mask, category="BEE"):
     neww = int(round(scalefactor*w,0))
     original = cv2.resize(original,(h, neww))
     mask = cv2.resize(mask,(h, neww))
+    return original, mask
+
+def changevalues(original, mask, category="BEE"):
+    huefactor = sto.hue()
+    valuefactor = sto.value()
+    saturationfactor = sto.saturation()
+
+    img = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)  #cv2.COLOR_BGR2HSV
+    width, height, channels = img.shape
+    customvalue = 0
+    customhue = 0
+    customsaturation = 0
+    if category == "POLLEN":
+        customvalue = 100
+    if category == "MITE":
+        customvalue = -50
+    if category == "BEE":
+        customhue = 5
+        customvalue = -10
+        customsaturation = -30
+    for x in range(0,width):
+        for y in range(0,height):
+            img[x,y,0] = max(min(img[x,y,0] + huefactor + customhue,179),0)    #hue
+            img[x,y,1] = max(min(img[x,y,1] + saturationfactor + customsaturation,255),0)   #saturation
+            img[x,y,2] = max(min(img[x,y,2] + valuefactor + customvalue,255),0)     #value
+
+
+    original = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)  #cv2.COLOR_BGR2HSV
+
+    return original, mask
+
+def manipulate(original, mask, category='BEE'):
+    original, mask = flip(original, mask, category)
+    original, mask = rotate(original, mask, category)
+    original, mask = resize(original, mask, category)
+    original, mask = changevalues(original, mask, category)
+    _ , mask = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
     return original, mask
 
 
@@ -396,17 +471,29 @@ def placeBee(background, original, mask, objects,beeparams):
                 notfound = True
                 continue
 
-    shiftx = xm-(neww/2)
-    shifty = ym-(newh/2)
+    shiftx = int(round(xm-(neww/2),0))
+    shifty = int(round(ym-(newh/2),0))
     for object in beeparams:
-        object['topleft']['x'] = int(round(object['topleft']['x'] + shiftx, 0))
-        object['topleft']['y'] = int(round(object['topleft']['y'] + shifty, 0))
-        object['bottomright']['x'] = int(round(object['bottomright']['x'] + shiftx, 0))
-        object['bottomright']['y'] = int(round(object['bottomright']['y'] + shifty, 0))
+        object['topleft']['x'] = object['topleft']['x'] + shiftx
+        object['topleft']['y'] = object['topleft']['y'] + shifty
+        object['bottomright']['x'] = object['bottomright']['x'] + shiftx
+        object['bottomright']['y'] = object['bottomright']['y'] + shifty
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-    mask = cv2.dilate(mask,kernel,iterations = 2)
-    output = cv2.seamlessClone(original, background, mask, center, cv2.NORMAL_CLONE)
+    method = sto.PlaceMethod()
+    if method == 1:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+        mask = cv2.dilate(mask,kernel,iterations = 2)
+        output = cv2.seamlessClone(original, background, mask, center, cv2.NORMAL_CLONE)
+    elif method == 2:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+        mask = cv2.dilate(mask,kernel,iterations = 2)
+        output = cv2.seamlessClone(original, background, mask, center, cv2.MIXED_CLONE)
+    else:
+        for x in range(shiftx,shiftx+neww):
+            for y in range(shifty,shifty+newh):
+                if mask[x - shiftx, y - shifty] > 200:
+                    background[x,y] = original[x - shiftx, y - shifty]
+        output = background
     rectpoints = (x1, y1, x2, y2)
     return output, rectpoints, beeparams
 
@@ -440,13 +527,35 @@ def place_Parzipolle(bee_orig, bee_mask, pol_orig, pol_mask):
     exception = False
 
     try:
-        if bee_orig.shape[0]<100 or bee_orig.shape[1]<100:
+
+        height, width, channels = bee_orig.shape
+        h, w, c = pol_orig.shape
+        scalefactor = 0.5*((height/(6*h))+(width/(6*w)))
+
+        newh = int(round(scalefactor*h,0))
+        neww = int(round(scalefactor*w,0))
+
+        pol_orig = cv2.resize(pol_orig,(newh, neww))
+        pol_mask = cv2.resize(pol_mask,(newh, neww))
+        _,mite_mask = cv2.threshold(pol_mask,127,255,cv2.THRESH_BINARY)
+
+
+        if False: #bee_orig.shape[0]<100 or bee_orig.shape[1]<100:
             resizewidth = int(round(max(200, 2*bee_orig.shape[0]),0))
             resizeheight = int(round(max(200, 2*bee_orig.shape[1]),0))
             bee_orig = cv2.resize(bee_orig,(resizeheight, resizewidth),interpolation = cv2.INTER_LINEAR)
             bee_mask = cv2.resize(bee_orig,(resizeheight, resizewidth),interpolation = cv2.INTER_LINEAR)
             _, bee_mask = cv2.threshold(bee_mask,127,255,cv2.THRESH_BINARY)
-        bee_mask_erod = bee_mask - cv2.erode(bee_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4)), iterations = 1)
+
+        interstep = cv2.erode(bee_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations = 2)
+        dialated = cv2.dilate(interstep, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)), iterations = 1)
+        bee_mask_erod = bee_mask - dialated
+
+        #numpy_horizontal1 = np.hstack((bee_mask, interstep))
+        #numpy_horizontal2 = np.hstack((dialated, bee_mask_erod))
+        #numpy_horizontal3 = np.hstack((numpy_horizontal1, numpy_horizontal2))
+        #cv2.imshow("test", numpy_horizontal3)
+        #cv2.waitKey(0)
 
         # make poll mask a binary mask (there were gray values before)
         _ , pol_mask = cv2.threshold(pol_mask, 150, 255, cv2.THRESH_BINARY)
@@ -596,36 +705,3 @@ def place_Mite(bee_orig, bee_mask, mite_orig, mite_mask):
     except:
         exception = True
         return [],[],[],exception
-
-'''
-    except:
-        exception = True
-        #return [],[],[],exception
-'''
-
-'''
-bee_orig = cv2.imread('bee_original.png')
-bee_mask = cv2.imread('bee_mask.png')[:,:,0]
-pol_orig = cv2.imread('poll_original.jpeg')
-pol_mask = cv2.imread('poll_mask.jpeg')[:,:,0]
-bee_mask_erod = bee_mask - cv2.erode(bee_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4)), iterations = 1)
-new_bee, new_mask, new_bb = place_polle(np.array(bee_orig), np.array(bee_mask), pol_orig, pol_mask)
-
-titles = [
-    #background',
-    'bee (original)', 'corresponding mask', 'pollen', 'corresponding mask',  'bee with synth. pollen', 'corresponding mask', "contour using erosion"]
-images = [
-    bee_orig,
-    bee_mask,
-    pol_orig,
-    pol_mask,
-    new_bee,
-    new_mask,
-    bee_mask_erod,
-    ]
-
-for i in range(len(titles)):
-    plt.subplot(4, 2, i+1), plt.imshow(images[i], 'gray')
-    plt.title(titles[i])
-    plt.xticks([]),plt.yticks([])
-'''

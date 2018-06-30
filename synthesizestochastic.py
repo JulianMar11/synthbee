@@ -2,19 +2,63 @@ import numpy as np
 
 
 def putBees():
-    return np.random.random_integers(1,2,1)[0]
+    myrand = np.random.random_sample()
+    withzero = 0.02
+    withone = 0.20
+    withtwo = 0.25
+    withthree = 0.25
+    withfour = 0.15
+
+    if myrand>=0 and myrand<withzero:
+        return 0
+    elif myrand>=withzero and myrand<withone+withzero:
+        return 1
+    elif myrand>=withone+withzero and myrand<withone+withzero+withtwo:
+        return 2
+    elif myrand>=withone+withzero+withtwo and myrand<withone+withzero+withtwo+withthree:
+        return 3
+    elif myrand>=withone+withzero+withtwo+withthree and myrand<withone+withzero+withtwo+withthree + withfour:
+        return 4
+    elif myrand>=withone+withzero+withtwo+withthree+withfour:
+        return 5
+    else:
+        return 1
+
+def internetbee():
+    z = np.random.random_integers(0,5,1)[0]
+    return z == 1
 
 def scaleBee():
     scalefactor = np.random.normal(1,0.3,1)[0]
-    scalefactor = max(0.8, scalefactor)
-    scalefactor = min(1.8, scalefactor)
+    scalefactor = max(1, scalefactor)
+    scalefactor = min(1.9, scalefactor)
     return scalefactor
 
 def sizeBeeInBackground(backgroundshape):
     width, height, channels = backgroundshape
-    size = np.random.random_integers(80,int(round(width/1.1,0)),1)[0]
+
+    absolutscale = int(round(np.random.normal(width/3.5,18,1)[0],0))
+    if absolutscale < 50:
+        absolutscale = 50 + np.random.random_integers(0,20,1)[0]
+
+    absolutscale = min(absolutscale,width*0.8,height*0.8)
+    absolutscale = int(round(absolutscale,0))
+
+    size = np.random.random_integers(60,int(round(width/1.1,0)),1)[0]
     size = min(size, width, height)
-    return size
+    return absolutscale #size
+
+def PlaceMethod():
+    myrand = np.random.random_sample()
+    normalclone = 0.25
+    mixedclone = 0.05
+    replace = 0.70
+    if myrand>=0 and myrand<normalclone:
+        return 1
+    elif myrand>=normalclone and myrand<normalclone+mixedclone:
+        return 2
+    else:
+        return 3
 
 def rotationBee():
     return np.random.random_integers(0,10,1)[0]
@@ -24,8 +68,8 @@ def flipBee():
 
 
 def putMite():
-    chance = np.random.random_integers(0,1000,1)[0]
-    return True#chance == 1
+    chance = np.random.random_integers(0,20,1)[0]
+    return chance == 1
 
 def scaleMite():
     scalefactor = np.random.normal(1,0.3,1)[0]
@@ -47,11 +91,15 @@ def flipMite():
 
 
 def putPoll():
-    chance = np.random.random_integers(0,10,1)[0]
-    return True #chance == 1
+    chance = np.random.random_integers(1,2,1)[0]
+    return chance == 1
 
 def anzPolls():
-    return np.random.random_integers(1,2,1)[0]
+    myrand = np.random.random_sample()
+    if myrand>=0 and myrand<0.6:
+        return 1
+    else:
+        return 2
 
 
 def scalePoll():
@@ -73,3 +121,24 @@ def flipPoll():
     return np.random.random_integers(0,1)
 
 
+def hue():
+    scalefactor = np.random.normal(0,8,1)[0]
+    scalefactor = min(20, scalefactor)
+    scalefactor = max(-20, scalefactor)
+    return scalefactor
+
+def hueVideo():
+    scalefactor = np.random.normal(0,14,1)[0]
+    scalefactor = min(35, scalefactor)
+    scalefactor = max(-35, scalefactor)
+    return scalefactor
+
+def saturation():
+    scalefactor = np.random.random_integers(-20,70,1)[0]
+    return scalefactor
+
+def value():
+    scalefactor = np.random.normal(20,20,1)[0]
+    scalefactor = min(70, scalefactor)
+    scalefactor = max(-25, scalefactor)
+    return scalefactor

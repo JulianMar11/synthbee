@@ -14,14 +14,16 @@ from yolo3.utils import get_random_data
 
 
 def _main():
-    annotation_path = 'train.txt'
+    os.chdir('/Users/Julian/GitHub/synthbee/neuronalnet/')
+    print(os.getcwd())
+    annotation_path = 'output/output.txt'
     log_dir = 'logs/000/'
-    classes_path = 'model_data/voc_classes.txt'
+    classes_path = 'model_data/voc_classes.txt' #neuronalnet/model_data/voc_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
     anchors = get_anchors(anchors_path)
 
-    input_shape = (416,416) # multiple of 32, hw
+    input_shape = (320,320) #(416,416) # multiple of 32, hw
 
     is_tiny_version = len(anchors)==6 # default setting
     create_func = create_tiny_model if is_tiny_version else create_model
