@@ -159,7 +159,7 @@ def synthesize(anzahl):
                 #Biene einzeichnen
                 imagenew, box, correctbeeparams, beeexe = su.placeBee(image, original, mask, objects, beeparams)
                 beeparams = []
-                if not ex:
+                if not beeexe:
                     image = imagenew
                     copybeeparams(correctbeeparams, annotations,objects)
                     addannotation(objects, annotations, box, label, a, b)
