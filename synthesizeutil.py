@@ -5,7 +5,6 @@ from os import listdir, getcwd
 from os.path import isfile, join
 #from imutils.object_detection import non_max_suppression
 import synthesizestochastic as sto
-from matplotlib import pyplot as plt
 from random import randint
 import math
 
@@ -420,82 +419,88 @@ def placeMite(original, mask, op, mp):
 
 
 def placeBee(background, original, mask, objects,beeparams):
-    size = sto.sizeBeeInBackground(background.shape)
-    width, height, color = background.shape
-    w,h,c = original.shape
+    exception = False
+    try:
+        size = sto.sizeBeeInBackground(background.shape)
+        width, height, color = background.shape
+        w,h,c = original.shape
 
-    if w >= h:
-        neww = size
-        newh = int(round(h*size/w,0))
-        original = cv2.resize(original, (newh, neww))
-        mask = cv2.resize(mask, (newh, neww))
+        if w >= h:
+            neww = size
+            newh = int(round(h*size/w,0))
+            original = cv2.resize(original, (newh, neww))
+            mask = cv2.resize(mask, (newh, neww))
 
-    else:
-        newh = size
-        neww = int(round(w*size/h,0))
-        original = cv2.resize(original,(newh, neww))
-        mask = cv2.resize(mask,(newh, neww))
+        else:
+            newh = size
+            neww = int(round(w*size/h,0))
+            original = cv2.resize(original,(newh, neww))
+            mask = cv2.resize(mask,(newh, neww))
 
-    for object in beeparams:
-        object['topleft']['x'] = int(round(object['topleft']['x'] * neww / w, 0))
-        object['topleft']['y'] = int(round(object['topleft']['y'] * newh / h, 0))
-        object['bottomright']['x'] = int(round(object['bottomright']['x'] * newh / h, 0))
-        object['bottomright']['y'] = int(round(object['bottomright']['y'] * neww / w, 0))
+        for object in beeparams:
+            object['topleft']['x'] = int(round(object['topleft']['x'] * neww / w, 0))
+            object['topleft']['y'] = int(round(object['topleft']['y'] * newh / h, 0))
+            object['bottomright']['x'] = int(round(object['bottomright']['x'] * newh / h, 0))
+            object['bottomright']['y'] = int(round(object['bottomright']['y'] * neww / w, 0))
 
-    notfound = True
-    counter = 0
-    while notfound and counter < 10:
-        notfound = False
-        counter = counter +1
-        xm = np.random.random_integers(round(neww/2,0),round(width-neww/2,0),1)[0]
-        ym = np.random.random_integers(round(newh/2,0),round(height-newh/2,0),1)[0]
-        center = (ym,xm)
-        from collections import namedtuple
-        Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
-        y1 = int(round(ym-newh/2,0)-3)
-        y2 = int(round(ym+newh/2,0)+3)
-        x1 = int(round(xm-neww/2,0)-3)
-        x2 = int(round(xm+neww/2,0)+3)
+        notfound = True
+        counter = 0
+        while notfound and counter < 10:
+            notfound = False
+            counter = counter +1
+            xm = np.random.random_integers(round(neww/2,0),round(width-neww/2,0),1)[0]
+            ym = np.random.random_integers(round(newh/2,0),round(height-newh/2,0),1)[0]
+            center = (ym,xm)
+            from collections import namedtuple
+            Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
+            y1 = int(round(ym-newh/2,0)-3)
+            y2 = int(round(ym+newh/2,0)+3)
+            x1 = int(round(xm-neww/2,0)-3)
+            x2 = int(round(xm+neww/2,0)+3)
 
-        newrect = Rectangle(x1,y1,x2,y2)
+            newrect = Rectangle(x1,y1,x2,y2)
 
-        for object in objects:
-            x = object['topleft']['x']
-            y = object['topleft']['y']
-            w = object['bottomright']['x'] - object['topleft']['x']
-            h = object['bottomright']['y'] - object['topleft']['y']
+            for object in objects:
+                x = object['topleft']['x']
+                y = object['topleft']['y']
+                w = object['bottomright']['x'] - object['topleft']['x']
+                h = object['bottomright']['y'] - object['topleft']['y']
 
-            existingrec = Rectangle(x, y, x+w, y+h)
-            overlaparea = area(newrect, existingrec)
-            if overlaparea is not None:
-                notfound = True
-                continue
+                existingrec = Rectangle(x, y, x+w, y+h)
+                overlaparea = area(newrect, existingrec)
+                if overlaparea is not None:
+                    notfound = True
+                    continue
 
-    shiftx = int(round(xm-(neww/2),0))
-    shifty = int(round(ym-(newh/2),0))
-    for object in beeparams:
-        object['topleft']['x'] = object['topleft']['x'] + shiftx
-        object['topleft']['y'] = object['topleft']['y'] + shifty
-        object['bottomright']['x'] = object['bottomright']['x'] + shiftx
-        object['bottomright']['y'] = object['bottomright']['y'] + shifty
+        shiftx = int(round(xm-(neww/2),0))
+        shifty = int(round(ym-(newh/2),0))
+        for object in beeparams:
+            object['topleft']['x'] = object['topleft']['x'] + shiftx
+            object['topleft']['y'] = object['topleft']['y'] + shifty
+            object['bottomright']['x'] = object['bottomright']['x'] + shiftx
+            object['bottomright']['y'] = object['bottomright']['y'] + shifty
 
-    method = sto.PlaceMethod()
-    if method == 1:
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-        mask = cv2.dilate(mask,kernel,iterations = 2)
-        output = cv2.seamlessClone(original, background, mask, center, cv2.NORMAL_CLONE)
-    elif method == 2:
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-        mask = cv2.dilate(mask,kernel,iterations = 2)
-        output = cv2.seamlessClone(original, background, mask, center, cv2.MIXED_CLONE)
-    else:
-        for x in range(shiftx,shiftx+neww):
-            for y in range(shifty,shifty+newh):
-                if mask[x - shiftx, y - shifty] > 200:
-                    background[x,y] = original[x - shiftx, y - shifty]
-        output = background
-    rectpoints = (x1, y1, x2, y2)
-    return output, rectpoints, beeparams
+        method = sto.PlaceMethod()
+        if method == 1:
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+            mask = cv2.dilate(mask,kernel,iterations = 2)
+            output = cv2.seamlessClone(original, background, mask, center, cv2.NORMAL_CLONE)
+        elif method == 2:
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+            mask = cv2.dilate(mask,kernel,iterations = 2)
+            output = cv2.seamlessClone(original, background, mask, center, cv2.MIXED_CLONE)
+        else:
+            for x in range(shiftx,shiftx+neww):
+                for y in range(shifty,shifty+newh):
+                    if mask[x - shiftx, y - shifty] > 200:
+                        background[x,y] = original[x - shiftx, y - shifty]
+            output = background
+        rectpoints = (x1, y1, x2, y2)
+        return output, rectpoints, beeparams, exception
+    except:
+        exception = True
+        return [],[],[],exception
+
 
 def drawBBox(image, boxes):
 
