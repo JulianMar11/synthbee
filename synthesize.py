@@ -189,7 +189,7 @@ def saveresults(annotations, output):
     print("Output und Annotation speichern")
 
     # Open a file
-    fo = open(PATH.DATAPATH + "SynthTrainingData/" + folder + "output.txt", "w")
+    fo = open(PATH.DATAPATH + "/DATA/" + str(startby) + "_output.txt", "w")
     # Write sequence of lines at the end of the file.
     line = fo.writelines(output)
 
@@ -198,7 +198,7 @@ def saveresults(annotations, output):
     #np.savetxt('test.out', output, delimiter=';')
 
     keys = annotations[0].keys()
-    with open(PATH.DATAPATH + "SynthTrainingData/" + folder + 'annotations.csv', 'w') as csvfile:
+    with open(PATH.DATAPATH + "/DATA/" + str(startby) + 'annotations.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=keys)
         writer.writeheader()
         for p in annotations:
