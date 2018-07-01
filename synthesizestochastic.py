@@ -50,9 +50,9 @@ def sizeBeeInBackground(backgroundshape):
 
 def PlaceMethod():
     myrand = np.random.random_sample()
-    normalclone = 0.25
-    mixedclone = 0.05
-    replace = 0.70
+    normalclone = 0.00
+    mixedclone = 0.00
+    replace = 1.0
     if myrand>=0 and myrand<normalclone:
         return 1
     elif myrand>=normalclone and myrand<normalclone+mixedclone:

@@ -7,6 +7,10 @@ import csv
 width = 350
 height = 340
 
+startby = 10001
+folder = 'Output10001/'
+numberofpictures = 10000
+
 import PATH
 import synthesizestochastic as sto
 print(PATH.DATAPATH)
@@ -98,9 +102,9 @@ def synthesize(anzahl):
     annotations = []
     output = []
     objid = 0
-    savepath = PATH.DATAPATH + "SynthTrainingData/"
+    savepath = PATH.DATAPATH + "SynthTrainingData/" + folder
 
-    for a in range(1,1 + anzahl):
+    for a in range(startby,startby + anzahl):
         print("Synthesise picture" + str(a))
         objects = list()
 
@@ -182,7 +186,7 @@ def saveresults(annotations, output):
     print("Output und Annotation speichern")
 
     # Open a file
-    fo = open("output.txt", "w")
+    fo = open(PATH.DATAPATH + "SynthTrainingData/" + folder + "output.txt", "w")
     # Write sequence of lines at the end of the file.
     line = fo.writelines(output)
 
@@ -191,12 +195,12 @@ def saveresults(annotations, output):
     #np.savetxt('test.out', output, delimiter=';')
 
     keys = annotations[0].keys()
-    with open('annotations.csv', 'w') as csvfile:
+    with open(PATH.DATAPATH + "SynthTrainingData/" + folder + 'annotations.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=keys)
         writer.writeheader()
         for p in annotations:
             writer.writerow(p)
 
 
-results, resultsout = synthesize(10000)
+results, resultsout = synthesize(numberofpictures)
 saveresults(results, resultsout)
