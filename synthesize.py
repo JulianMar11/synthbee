@@ -160,13 +160,16 @@ def synthesize(anzahl):
                 imagenew, box, correctbeeparams, beeexe = su.placeBee(image, original, mask, objects, beeparams)
                 beeparams = []
                 if not beeexe:
+                    print("no mistake")
                     image = imagenew
                     copybeeparams(correctbeeparams, annotations,objects)
                     addannotation(objects, annotations, box, label, a, b)
 
 
-
-        cv2.imwrite(savepath + str(a) + ".jpg", image)
+        #print(savepath + str(a) + ".jpg")
+        #cv2.imwrite(savepath + str(a) + ".jpg", image)
+        #print(PATH.DATAPATH + "/DATA/" + str(a) + ".jpg")
+        cv2.imwrite(PATH.DATAPATH + "/DATA/" + str(a) + ".jpg", image)
         output.append(saveoutput(objects, a))
         #bbox = su.drawBBox(image, objects)
         #cv2.imwrite(savepath + str(a) + "_bbox.jpg", bbox)
