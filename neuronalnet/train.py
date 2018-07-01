@@ -11,10 +11,11 @@ from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
-
+import PATH
 
 def _main():
-    os.chdir('/Users/Julian/GitHub/synthbee/neuronalnet/')
+    print(PATH.DATAPATH)
+    os.chdir(PATH.DATAPATH + 'neuronalnet/')
     print(os.getcwd())
     annotation_path = 'output/output.txt'
     log_dir = 'logs/000/'
