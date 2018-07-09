@@ -645,10 +645,16 @@ def place_Mite(bee_orig, bee_mask, mite_orig, mite_mask):
         if len(bee_mask.shape) == 3:
             bee_mask = bee_mask[:,:,0]
 
+        cv2.imwrite(PATH.DATAPATH + "milbemask.jpg", bee_mask)
+
         bee_mask_erod = cv2.erode(bee_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=1)
 
         cont = True
+        counter = 1
         while cont:
+            print(PATH.DATAPATH + str(counter) + ".jpg")
+            cv2.imwrite(PATH.DATAPATH + str(counter) + ".jpg", bee_mask_erod)
+            counter = counter + 1
             bee_mask_erod_new = cv2.erode(bee_mask_erod, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=1)
             if np.sum(np.sum(bee_mask_erod_new)) == 0:
                 cont = False

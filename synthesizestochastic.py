@@ -3,11 +3,11 @@ import numpy as np
 
 def putBees():
     myrand = np.random.random_sample()
-    withzero = 0.02
-    withone = 0.20
-    withtwo = 0.25
-    withthree = 0.25
-    withfour = 0.15
+    withzero = 0.00
+    withone = 1.00
+    withtwo = 0.00
+    withthree = 0.00
+    withfour = 0.00
 
     if myrand>=0 and myrand<withzero:
         return 0
@@ -37,11 +37,11 @@ def scaleBee():
 def sizeBeeInBackground(backgroundshape):
     width, height, channels = backgroundshape
 
-    absolutscale = int(round(np.random.normal(width/3.5,18,1)[0],0))
-    if absolutscale < 50:
-        absolutscale = 50 + np.random.random_integers(0,20,1)[0]
+    absolutscale = int(round(np.random.normal(width/1.1,15,1)[0],0))
+    if absolutscale < 100:
+        absolutscale = 100 + np.random.random_integers(0,30,1)[0]
 
-    absolutscale = min(absolutscale,width*0.8,height*0.8)
+    absolutscale = min(absolutscale,width*0.95,height*0.95)
     absolutscale = int(round(absolutscale,0))
 
     size = np.random.random_integers(60,int(round(width/1.1,0)),1)[0]
@@ -68,7 +68,7 @@ def flipBee():
 
 
 def putMite():
-    chance = np.random.random_integers(0,20,1)[0]
+    chance = np.random.random_integers(0,10,1)[0]
     return chance == 1
 
 def scaleMite():

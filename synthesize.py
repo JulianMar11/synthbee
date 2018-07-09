@@ -9,7 +9,7 @@ height = 340
 
 startby = 10001
 folder = 'Output10001/'
-numberofpictures = 10000
+numberofpictures = 10
 
 import PATH
 import synthesizestochastic as sto
@@ -83,11 +83,11 @@ def saveoutput(beeparams, a):
     for object in beeparams:
         labelinfo = 3
         if str(object['label']) == "Biene":
-            labelinfo = 0
+            labelinfo = 777
         elif str(object['label']) == "Polle":
-            labelinfo = 1
+            labelinfo = 0
         elif str(object['label']) == "Milbe":
-            labelinfo = 2
+            labelinfo = 1
 
         boxinfo = " " + str(object['topleft']['y']) + "," + str(object['topleft']['x']) + "," + str(object['bottomright']['y']) + "," + str(object['bottomright']['x'])
         string = string + boxinfo + ',' + str(labelinfo)
@@ -167,13 +167,13 @@ def synthesize(anzahl):
                     print("no mistake")
                     image = imagenew
                     copybeeparams(correctbeeparams, annotations,objects)
-                    addannotation(objects, annotations, box, label, a, b)
+                    #addannotation(objects, annotations, box, label, a, b)
 
 
         #print(savepath + str(a) + ".jpg")
         #cv2.imwrite(savepath + str(a) + ".jpg", image)
         #print(PATH.DATAPATH + "/DATA/" + str(a) + ".jpg")
-        cv2.imwrite(PATH.DATAPATH + "/DATA/" + str(a) + ".jpg", image)
+        cv2.imwrite(PATH.DATAPATH + "DATA/" + str(a) + ".jpg", image)
         output.append(saveoutput(objects, a))
         #bbox = su.drawBBox(image, objects)
         #cv2.imwrite(savepath + str(a) + "_bbox.jpg", bbox)
@@ -189,7 +189,7 @@ def saveresults(annotations, output):
     print("Output und Annotation speichern")
 
     # Open a file
-    fo = open(PATH.DATAPATH + "/DATA/" + "output" + str(startby) +".txt", "w")
+    fo = open(PATH.DATAPATH + "DATA/" + "output" + str(startby) +".txt", "w")
     # Write sequence of lines at the end of the file.
     line = fo.writelines(output)
 
@@ -198,7 +198,7 @@ def saveresults(annotations, output):
     #np.savetxt('test.out', output, delimiter=';')
 
     keys = annotations[0].keys()
-    with open(PATH.DATAPATH + "/DATA/" + 'annotations'+ str(startby) +'.csv', 'w') as csvfile:
+    with open(PATH.DATAPATH + "DATA/" + 'annotations'+ str(startby) +'.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=keys)
         writer.writeheader()
         for p in annotations:
